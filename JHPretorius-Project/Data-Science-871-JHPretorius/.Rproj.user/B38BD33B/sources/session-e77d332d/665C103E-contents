@@ -13,3 +13,15 @@ path <- "/Users/janhendrikpretorius/Library/CloudStorage/OneDrive-StellenboschUn
 file <- "lovoo_v3_users_api-results.csv"
 
 df <- read_csv(paste0(path, file))
+
+# Define full and null model
+full.model <- lm(counts_kisses ~ genderLooking + age + counts_details + counts_pictures + counts_profileVisits + counts_fans + counts_g +
+                 flirtInterests_chat + flirtInterests_friends + flirtInterests_date + isFlirtstar + isHighlighted + isInfluencer + isMobile +
+                   lang_count + lang_fr + lang_en + lang_de + verified + shareProfileEnabled, data = df)
+null.model <- lm(counts_kisses ~ 1, data = df)
+
+# Perform stepwise regression
+stepwise.model <- step(null.model, scope = list(lower = null.model, upper = full.model), direction = "both")
+
+# Display the final model
+summary(stepwise.model)
