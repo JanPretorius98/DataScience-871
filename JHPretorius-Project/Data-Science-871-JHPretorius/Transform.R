@@ -13,11 +13,12 @@ path <- "/Users/janhendrikpretorius/Library/CloudStorage/OneDrive-StellenboschUn
 file <- "lovoo_v3_users_api-results.csv"
 
 df <- read_csv(paste0(path, file))
-
+df <- df %>% 
+  filter(!is.na(night_owl))
 # Define full and null model
-full.model <- lm(counts_kisses ~ genderLooking + age + counts_details + counts_pictures + counts_profileVisits + counts_fans + counts_g +
+full.model <- lm(counts_kisses ~ counts_profileVisits + genderLooking + age + counts_details + counts_pictures + counts_fans +
                  flirtInterests_chat + flirtInterests_friends + flirtInterests_date + isFlirtstar + isHighlighted + isInfluencer + isMobile +
-                   lang_count + lang_fr + lang_en + lang_de + verified + shareProfileEnabled, data = df)
+                   lang_count + lang_fr + lang_en + lang_de + verified + shareProfileEnabled + has_emoji + contains_popular_word + night_owl, data = df)
 null.model <- lm(counts_kisses ~ 1, data = df)
 
 # Perform stepwise regression
