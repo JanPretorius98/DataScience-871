@@ -10,12 +10,15 @@ Goal: "Threefold: (1) Transformation and cleaning of data. (2) Exploratory Data 
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Preface
+
 ```{r housekeeping, warning = FALSE}
 # Clear environment
 rm(list = ls())
 
 # Load packages in use
-pacman::p_load(dplyr, ggplot2, tidyverse, rsample, caret, glmnet, vip, pdp, stringr, tidytext)
+pacman::p_load(dplyr, ggplot2, tidyverse, rsample, caret, glmnet, vip, pdp, stringr, 
+               tidytext, emoji, stopwords)
 
 # Define plot themes and palettes
 palette <- c("#29066b", "#71016d", "#a5206b", "#cc4868", "#ea7369")
@@ -58,7 +61,17 @@ df <- read_csv(paste0(path, file))
 
 # Introduction
 
-The data set I am considering is from a European dating app called Lovoo. The data contain around 40 different variables, containing information on a particular profile and other demographics. An extract of the data is included below, along with Table 1 that describes some of the relevant variables. The data set only contains data on individuals that identify as female.
+In this project, my aim is to uncover the defining characteristics that contribute to an individual's attractiveness, popularity, and fame. My strategy involves using data from Lovoo, a European dating site/app, which is available through [Kaggle](https://www.kaggle.com/datasets/utkarshx27/lovoo-dating-app-dataset?select=lovoo_v3_users_api-results.csv). Driven by a keen interest to understand behavioural traits beyond mere physical attractiveness, I am determined to reveal hidden attributes that potentially shape interpersonal interactions within the sphere of a dating app environment. Dating site behaviour carries relevance even in economic circles, as an understanding of this paradigm may be used to bolster economic models to study relationship initiation as an analytic framework to explain overall mate-selection behavior.
+
+The analysis commences with the transformation of raw data into a more insightful format, by creating additional variables designed to enhance the predictive power of subsequent statistical models. This process allows me to delve into an exploratory role, as I sift through the data in search of characteristics that could indicate valuable predictive variables. The goal is not just to understand but to forecast which factors lead to an increased number of profile views and 'likes' received.
+
+To this end, I construct a random forest model, a powerful tool in discerning the intricate characteristics that influence human behaviour. The model functions as a compass, guiding me towards a deeper understanding of the underpinnings of attraction, popularity, and fame in the digital dating landscape.
+
+# Part 1: Transformation and Cleaning
+
+The data contain around 40 different variables, containing information on a particular profile and other demographics. An extract of the data is included below, along with Table 1 that describes some of the relevant variables. The data set only contains data on individuals that identify as female. To this end, I am essentially attempting to understand which factors determine the behaviour of individuals interested in females.
+
+### Head of dataframe
 
 ```{r echo=FALSE}
 head(df)
@@ -67,7 +80,7 @@ head(df)
 ### Table 1
 
 | Variable             | Description                                                                                                                                 |
-|------------------|-----------------------------------------------------|
+|-----------------------|-------------------------------------------------|
 | genderLooking        | Preferred gender the subject is looking to engage with. Represented as 'M' for male, 'F' for female, 'both' for male and female, or 'none'. |
 | age                  | Age of the individual.                                                                                                                      |
 | counts_details       | How complete the profile is. Proportion of detail in the account. Measured from 0.0-1.0.                                                    |
@@ -80,23 +93,41 @@ head(df)
 | lang\_\*             | Language spoken by an individual. \* represents: 'en' (English), 'de' (German), 'fr' (French), 'it' (Italian), 'es' (Spanish).              |
 | whazzup              | A phrase that represents the profile's 'bio'.                                                                                               |
 
-# Part 1: Transformation and Cleaning
+The raw data is already very useable, but some new variables must be added to produce better models. The first data transformation is to consider the language used by individuals in their profiles. To this end, there are two main operations when discerning the effect of language use on individual behaviour: words used in biographies, and emoji use. Both these factors may reveal characteristics underlying confidence and perceived desirability.
 
 ```{r words}
-head(df)
+
+# Define dummy variable that detects presence of emojis
+df <- df %>%
+  mutate(has_emoji = ifelse(emoji_detect(whazzup), 1, 0))
 
 # Get the most used words in profile
-words <- df %>% 
-   select(whazzup) %>% 
-   unnest_tokens(word, whazzup) %>% 
-   mutate(word = gsub('[[:digit:]]+', '', word)) %>% 
-   count(word, sort = T)
+# First, create a table of words with the corresponding counts_profileVisits
+words_visits <- df %>%
+  unnest_tokens(word, whazzup) %>%
+  mutate(word = str_remove_all(word, "[[:digit:]]+")) %>%
+  select(word, counts_profileVisits)
 
-words <- words %>%
-  left_join(df, by = c("word" = "whazzup")) %>%
+# Then calculate the mean counts_profileVisits for each word and its count
+words <- words_visits %>%
   group_by(word) %>%
-  summarise(mean_profileVisits = mean(counts_profileVisits), word_count = n())
+  summarise(mean_profileVisits = mean(counts_profileVisits, na.rm = TRUE),
+            word_count = n(), 
+            .groups = "drop")
 
+# Create word popularity index
+words <- words %>%
+  mutate(popularity_index = 0.8 * word_count + 0.2 * mean_profileVisits) %>% 
+  filter(popularity_index > 200 & word_count > 10, 
+         word != "", 
+         !is.na(word), 
+         !is.na(mean_profileVisits), 
+         !is.na(word_count), 
+         !is.na(popularity_index)) %>%
+  filter(!word %in% stopwords::stopwords("de")) %>%
+  filter(!word %in% stopwords::stopwords("en"))
+
+# Add dummy variable
 
 ```
 
