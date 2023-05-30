@@ -80,7 +80,7 @@ head(df)
 ### Table 1
 
 | Variable             | Description                                                                                                                                 |
-|-----------------------|-------------------------------------------------|
+|-----------------------|------------------------------------------------|
 | genderLooking        | Preferred gender the subject is looking to engage with. Represented as 'M' for male, 'F' for female, 'both' for male and female, or 'none'. |
 | age                  | Age of the individual.                                                                                                                      |
 | counts_details       | How complete the profile is. Proportion of detail in the account. Measured from 0.0-1.0.                                                    |
@@ -94,6 +94,8 @@ head(df)
 | whazzup              | A phrase that represents the profile's 'bio'.                                                                                               |
 
 The raw data is already very useable, but some new variables must be added to produce better models. The first data transformation is to consider the language used by individuals in their profiles. To this end, there are two main operations when discerning the effect of language use on individual behaviour: words used in biographies, and emoji use. Both these factors may reveal characteristics underlying confidence and perceived desirability.
+
+The code chunk below creates two new dummy variables, `has_emoji` and `contains_popular_word`. `has_emoji` attributes a '1' based on whether `wazzup` contains an emoji. `contains_popular_word` attributes a '1' based on whether `wazzup` contains a popular word. The code chunk also outputs which words are the most popular.
 
 ```{r words}
 
@@ -115,7 +117,7 @@ words <- words_visits %>%
             word_count = n(), 
             .groups = "drop")
 
-# Create word popularity index
+# Create word popularity index and determine popular words
 words <- words %>%
   mutate(popularity_index = 0.8 * word_count + 0.2 * mean_profileVisits) %>% 
   filter(popularity_index > 200 & word_count > 10, 
@@ -127,27 +129,31 @@ words <- words %>%
   filter(!word %in% stopwords::stopwords("de")) %>%
   filter(!word %in% stopwords::stopwords("en"))
 
-# Add dummy variable
+# Create a single pattern string that matches any word in words$word
+words_pattern <- paste(words$word, collapse = "|")
+
+# Add the new variable to df
+df <- df %>%
+  mutate(contains_popular_word = ifelse(str_detect(whazzup, words_pattern), 1, 0)) %>%
+  mutate(
+    contains_popular_word = replace_na(contains_popular_word, 0),
+    has_emoji = replace_na(has_emoji, 0)
+  )
+
+words <- words %>%
+  arrange(desc(popularity_index)) %>% 
+  select(c(word, popularity_index))
+
+head(words)
+```
+
+A final operation pertains to the time an individual is online. I add a new dummy variable called `night_owl` to the dataframe that assigns a '1' based on whether a person was online at night or not. The motivation behind this is that dating apps tend to be more popular in the evenings, than during daytime.
+
+```{r, warning=FALSE}
+df <- df %>%
+  mutate(night_owl = ifelse(hour(hms(substr(lastOnlineDate, 12, 19))) > 18 | 
+                            hour(hms(substr(lastOnlineDate, 12, 19))) < 6, 1, 0))
 
 ```
 
-```{r}
-
-# First, create a table of words
-words <- df %>%
-  unnest_tokens(word, whazzup) %>%
-  mutate(word = str_remove_all(word, "[[:digit:]]+")) %>%
-  count(word, sort = T)
-
-# Now, create a table of word occurrences with profile visits
-word_visits <- df %>%
-  unnest_tokens(word, whazzup) %>%
-  mutate(word = str_remove_all(word, "[[:digit:]]+")) %>%
-  group_by(word) %>%
-  summarise(mean_profile_visits = mean(counts_profileVisits, na.rm = TRUE), .groups = "drop")
-
-# Join the tables together
-final <- words %>%
-  left_join(word_visits, by = "word")
-
-```
+#   Part 2: Exploratory Data Analysis
