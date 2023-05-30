@@ -6,7 +6,7 @@ Goal: "Transform and Prepare data for exploratory analysis and modelling"
 
 # Housekeeping
 rm(list = ls()) #Clear environment
-pacman::p_load(dplyr, ggplot2, tidyverse, rsample, caret, glmnet, vip, pdp,)
+pacman::p_load(dplyr, ggplot2, tidyverse, rsample, caret, glmnet, vip, pdp)
 
 # Load data
 path <- "/Users/janhendrikpretorius/Library/CloudStorage/OneDrive-StellenboschUniversity/Masters-2023/Modules/Data Science/DataScience-871-repo/JHPretorius-Project/Candidate Data Sets/Dating/"

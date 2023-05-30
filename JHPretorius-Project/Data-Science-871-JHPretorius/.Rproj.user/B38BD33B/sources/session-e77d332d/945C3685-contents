@@ -3,28 +3,120 @@ title: "Data-Science-871-JHPretorius-WriteUp"
 author: "JH Pretorius"
 date: "2023-05-24"
 output: html_document
+Goal: "Threefold: (1) Transformation and cleaning of data. (2) Exploratory Data Analysis of Dating Site Data. (3) Machine Learning modelling."
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+```{r housekeeping, warning = FALSE}
+# Clear environment
+rm(list = ls())
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+# Load packages in use
+pacman::p_load(dplyr, ggplot2, tidyverse, rsample, caret, glmnet, vip, pdp, stringr, tidytext)
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+# Define plot themes and palettes
+palette <- c("#29066b", "#71016d", "#a5206b", "#cc4868", "#ea7369")
 
-```{r cars}
-summary(cars)
+th <- theme(legend.position = "bottom",
+            panel.background = element_blank(),
+            plot.background = element_rect(fill = "white", color = "white"),
+            panel.grid.major = element_line(color="#808080", size = 0.1),
+            panel.grid.minor = element_line(color="#808080", size = 0.1),
+            axis.title.x=element_text(colour="black", size = 12,
+                                      family = "arial", vjust=-2,hjust=0.5),
+            axis.title.y=element_text(colour="black", size = 12,
+                                      family = "arial",vjust = 3,hjust=0.5),
+            axis.text.y=element_text(colour ="black", size = 10, 
+                                     family = "arial"),
+            axis.text.x=element_text(colour="black", size = 10,
+                                     family = "arial"),
+            plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"),
+            plot.title = element_text(colour="black", size = 16,
+                                      family = "arial",hjust=0.5, face = "bold"),
+            plot.subtitle = element_text(colour="black", size = 14,
+                                         family = "arial"),
+            plot.caption = element_text(colour="black", size = 10,
+                                        family = "arial"),
+            legend.text = element_text(colour="black", size = 12,
+                                       family = "arial"),
+            legend.title = element_text(colour="black", size = 12,
+                                        family = "arial", hjust=3, face = "bold"),
+            axis.ticks = element_blank(),
+            strip.text = element_text(colour="black", size = 12,
+                                      family = "arial", vjust=1,hjust=0.5))
+
+# Import data
+path <- "/Users/janhendrikpretorius/Library/CloudStorage/OneDrive-StellenboschUniversity/Masters-2023/Modules/Data Science/DataScience-871-repo/JHPretorius-Project/Candidate Data Sets/Dating/"
+file <- "lovoo_v3_users_api-results.csv"
+
+df <- read_csv(paste0(path, file))
+
 ```
 
-## Including Plots
+# Introduction
 
-You can also embed plots, for example:
+The data set I am considering is from a European dating app called Lovoo. The data contain around 40 different variables, containing information on a particular profile and other demographics. An extract of the data is included below, along with Table 1 that describes some of the relevant variables. The data set only contains data on individuals that identify as female.
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r echo=FALSE}
+head(df)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+### Table 1
+
+| Variable             | Description                                                                                                                                 |
+|------------------|-----------------------------------------------------|
+| genderLooking        | Preferred gender the subject is looking to engage with. Represented as 'M' for male, 'F' for female, 'both' for male and female, or 'none'. |
+| age                  | Age of the individual.                                                                                                                      |
+| counts_details       | How complete the profile is. Proportion of detail in the account. Measured from 0.0-1.0.                                                    |
+| counts_pictures      | How many pictures does the profile contain.                                                                                                 |
+| counts_profileVisits | How many times the profile has been viewed.                                                                                                 |
+| counts_kisses        | Number of 'kisses' or 'likes' received by profile.                                                                                          |
+| flirtInterests\_\*   | What the individual is interested in. \* represents: 'chat', 'date', 'friends'.                                                             |
+| verified             | Whether the profile has been verified or not.                                                                                               |
+| lang_count           | Number of languages spoken by an individual.                                                                                                |
+| lang\_\*             | Language spoken by an individual. \* represents: 'en' (English), 'de' (German), 'fr' (French), 'it' (Italian), 'es' (Spanish).              |
+| whazzup              | A phrase that represents the profile's 'bio'.                                                                                               |
+
+# Part 1: Transformation and Cleaning
+
+```{r words}
+head(df)
+
+# Get the most used words in profile
+words <- df %>% 
+   select(whazzup) %>% 
+   unnest_tokens(word, whazzup) %>% 
+   mutate(word = gsub('[[:digit:]]+', '', word)) %>% 
+   count(word, sort = T)
+
+words <- words %>%
+  left_join(df, by = c("word" = "whazzup")) %>%
+  group_by(word) %>%
+  summarise(mean_profileVisits = mean(counts_profileVisits), word_count = n())
+
+
+```
+
+```{r}
+
+# First, create a table of words
+words <- df %>%
+  unnest_tokens(word, whazzup) %>%
+  mutate(word = str_remove_all(word, "[[:digit:]]+")) %>%
+  count(word, sort = T)
+
+# Now, create a table of word occurrences with profile visits
+word_visits <- df %>%
+  unnest_tokens(word, whazzup) %>%
+  mutate(word = str_remove_all(word, "[[:digit:]]+")) %>%
+  group_by(word) %>%
+  summarise(mean_profile_visits = mean(counts_profileVisits, na.rm = TRUE), .groups = "drop")
+
+# Join the tables together
+final <- words %>%
+  left_join(word_visits, by = "word")
+
+```
