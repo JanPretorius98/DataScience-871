@@ -15,10 +15,11 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r housekeeping, warning = FALSE}
 # Clear environment
 rm(list = ls())
+options(scipen = 999)
 
 # Load packages in use
 pacman::p_load(dplyr, ggplot2, tidyverse, rsample, caret, glmnet, vip, pdp, stringr, 
-               tidytext, emoji, stopwords)
+               tidytext, emoji, stopwords, ggridges)
 
 # Define plot themes and palettes
 palette <- c("#29066b", "#71016d", "#a5206b", "#cc4868", "#ea7369")
@@ -80,7 +81,7 @@ head(df)
 ### Table 1
 
 | Variable             | Description                                                                                                                                 |
-|-----------------------|------------------------------------------------|
+|-------------------------|------------------------------------------------|
 | genderLooking        | Preferred gender the subject is looking to engage with. Represented as 'M' for male, 'F' for female, 'both' for male and female, or 'none'. |
 | age                  | Age of the individual.                                                                                                                      |
 | counts_details       | How complete the profile is. Proportion of detail in the account. Measured from 0.0-1.0.                                                    |
@@ -156,4 +157,61 @@ df <- df %>%
 
 ```
 
-#   Part 2: Exploratory Data Analysis
+# Part 2: Exploratory Data Analysis
+
+```{r, echo=FALSE}
+
+df %>% 
+  filter(counts_profileVisits < 10000) %>% 
+  ggplot(aes(x = factor(has_emoji), y = counts_profileVisits, fill = factor(has_emoji))) +
+  geom_boxplot(alpha = 0.5) +
+  scale_fill_manual(values = c("#29066b", "#ea7369"), name = "", labels = c("No Emoji", "Contains Emoji")) +
+  labs(x = "Contains Emoji", y = "Profile Visits Count") +
+  th
+
+df %>% 
+  filter(counts_profileVisits < 10000) %>% 
+  ggplot(aes(x = factor(contains_popular_word), y = counts_profileVisits, fill = factor(contains_popular_word))) +
+  geom_boxplot(alpha = 0.5) +
+  scale_fill_manual(values = c("#29066b", "#ea7369"), name = "", labels = c("No Popular Word", "Contains Popular Word")) +
+  labs(x = "Contains Popular Word", y = "Profile Visits Count") +
+  th
+
+df %>% 
+  filter(counts_profileVisits < 10000) %>%
+  filter(!is.na(night_owl)) %>% 
+  ggplot(aes(x = factor(night_owl), y = counts_profileVisits, fill = factor(night_owl))) +
+  geom_boxplot(alpha = 0.5) +
+  scale_fill_manual(values = c("#29066b", "#ea7369"), name = "", labels = c("Early Bird", "Night Owl")) +
+  labs(x = "Night Owl", y = "Profile Visits Count") +
+  th
+
+```
+
+```{r, echo=FALSE}
+
+df %>% 
+  filter(counts_profileVisits < 10000) %>% 
+  ggplot(aes(x = counts_profileVisits, fill = factor(has_emoji))) +
+  geom_density(alpha = 0.5) +
+  scale_fill_manual(values = c("#29066b", "#ea7369"), name = "", labels = c("No Emoji", "Contains Emoji")) +
+  labs(x = "Profile Visits Count", y = "Density", fill = "Contains Emoji") +
+  th
+
+df %>% 
+  filter(counts_profileVisits < 10000) %>% 
+  ggplot(aes(x = counts_profileVisits, fill = factor(contains_popular_word))) +
+  geom_density(alpha = 0.5) +
+  scale_fill_manual(values = c("#29066b", "#ea7369"), name = "", labels = c("No Popular Word", "Contains Popular Word")) +
+  labs(x = "Profile Visits Count", y = "Density", fill = "Contains Popular Word") +
+  th
+
+df %>% 
+  filter(counts_profileVisits < 10000) %>%
+  filter(!is.na(night_owl)) %>% 
+  ggplot(aes(x = counts_profileVisits, fill = factor(night_owl))) +
+  geom_density(alpha = 0.5) +
+  scale_fill_manual(values = c("#29066b", "#ea7369"), name = "", labels = c("Early Bird", "Night Owl")) +
+  labs(x = "Night Owl", y = "Profile Visits Count") +
+  th
+```

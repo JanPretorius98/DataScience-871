@@ -1,0 +1,8 @@
+"0",""
+"0","df %>% "
+"0","  filter(counts_profileVisits < 10000) %>% "
+"0","  ggplot(aes(x = counts_profileVisits, fill = factor(contains_popular_word))) +"
+"0","  geom_density(alpha = 0.5) +"
+"0","  scale_fill_manual(values = c(""#29066b"", ""#ea7369""), name = """", labels = c(""No Popular Word"", ""Contains Popular Word"")) +"
+"0","  labs(x = ""Profile Visits Count"", y = ""Density"", fill = ""Contains Popular Word"") +"
+"0","  th"
