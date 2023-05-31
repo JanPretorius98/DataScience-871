@@ -1,8 +1,0 @@
-"0",""
-"0","df %>% "
-"0","  filter(counts_profileVisits < 10000) %>% "
-"0","  ggplot(aes(x = counts_profileVisits, fill = factor(has_emoji))) +"
-"0","  geom_density(alpha = 0.5) +"
-"0","  scale_fill_manual(values = c(""#29066b"", ""#ea7369""), name = """", labels = c(""No Emoji"", ""Contains Emoji"")) +"
-"0","  labs(x = ""Profile Visits Count"", y = ""Density"", fill = ""Contains Emoji"") +"
-"0","  th"
