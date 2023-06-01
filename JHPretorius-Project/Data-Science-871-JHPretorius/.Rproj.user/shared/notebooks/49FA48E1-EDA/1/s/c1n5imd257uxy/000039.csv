@@ -1,0 +1,23 @@
+"0","library(rayshader)
+"
+"2","Registered S3 methods overwritten by 'rgl':
+  method               from
+  knit_print.rglId         
+  knit_print.rglOpen3d     
+  sew.rglRecordedplot      
+"
+"2","Error in dyn.load(dynlib <- getDynlib(dir)) : 
+  unable to load shared object '/Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/library/rgl/libs/rgl.so':
+  dlopen(/Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/library/rgl/libs/rgl.so, 0x0006): Library not loaded: /opt/X11/lib/libGLU.1.dylib
+  Referenced from: <5E47706F-C5D7-3554-935F-8F5C27D4A00A> /Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/library/rgl/libs/rgl.so
+  Reason: tried: '/opt/X11/lib/libGLU.1.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/opt/X11/lib/libGLU.1.dylib' (no such file), '/opt/X11/lib/libGLU.1.dylib' (no such file), '/usr/local/lib/libGLU.1.dylib' (no such file), '/usr/lib/libGLU.1.dylib' (no such file, not in dyld cache)
+"
+"2","Warning: 	Loading rgl's DLL failed. 
+	This build of rgl depends on XQuartz, which failed to load.
+ See the discussion in https://stackoverflow.com/a/66127391/2554330"
+"2","Warning: Trying without OpenGL..."
+"2","Error: package or namespace load failed for ‘rayshader’:
+ .onLoad failed in loadNamespace() for 'rgl', details:
+  call: rgl.init(initValue, onlyNULL)
+  error: OpenGL is not available in this build
+"
