@@ -264,7 +264,7 @@ By using my Google Maps API, I was able to geocode the locations of every profil
 
 ```
 
-```{r}
+```{r warning=FALSE, fig.align='center',  fig.height= 9, fig.width=9}
 df_city <- read_excel("geocode_latlon.xlsx")
 
 df_city <- df_city %>%
@@ -281,17 +281,47 @@ df_city <- df_city %>%
   filter(substr(address, nchar(address) - 1, nchar(address)) %in% eu_countries$code | address == "UK")
 
 world <- map_data("world") %>%
-  filter(region %in% eu_countries$name | region == "UK")
+  filter(region %in% eu_countries$name | region == "UK" | region == "Czech Republic" | region == "Switzerland")
 
-map <-  ggplot() +
-    geom_polygon(data = world, aes(x=long, y = lat, group = group), fill="white", alpha=0.3) +
-    geom_point(data = df_city, aes(x=lon, y=lat, color=mean_profile_views), alpha=0.9) +
-    scale_size_continuous(range=c(1,12)) +
-    scale_color_viridis(trans="log") + th + coord_map() + theme(legend.position="none")
+# Creating ggplot with map
 
-library(rayshader)
+map_bg <- ggplot(data = world) +
+  geom_polygon(aes(x = long, y = lat, group = group), fill = "white", colour = "black") +
+  coord_map() +
+  theme_void()
+
+# Adding scatterplot on the map
+views <- map_bg +
+  geom_point(data = df_city, aes(x = lon, y = lat, color = mean_profile_views, size = mean_profile_views), alpha = 0.8) +
+  scale_colour_gradient(
+    name = 'Mean Profile Views',
+    limits = range(df_city$mean_profile_views),
+    low = "#8c2aef",
+    high = "#1beaa7"
+  ) +
+  scale_size_continuous(guide = "none", range = c(1, 8)) +
+  theme(plot.background = element_rect(fill = "#000123", color = "#000123"),
+        panel.background = element_rect(fill = "#000123", color = "#000123"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text = element_blank(),
+        legend.key = element_rect(fill = "#000123", color = "#000123"),
+        legend.background = element_rect(fill = "#000123"),
+        legend.text = element_text(colour = "white"),
+        legend.title = element_text(colour = "white"),
+        plot.margin = margin(0, 0, 0, 0))
+
+print(views)
+
+
+
+
+
 ```
 
+```{r}
+
+```
 
 #### Figure 4: Bubble plot of number of kisses received and profile views. A non-linear model (loess method) was once again fitted on the plot to discern possible patterns and differences between bios with emojis and those without. Size of dots present how detailed the account is.
 
@@ -331,3 +361,4 @@ df %>%
 # Part 3: Modelling & Results
 
 # Discussion & Conclusion
+
