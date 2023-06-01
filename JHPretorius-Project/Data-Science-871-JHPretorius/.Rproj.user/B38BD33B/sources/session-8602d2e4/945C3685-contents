@@ -264,7 +264,7 @@ By using my Google Maps API, I was able to geocode the locations of every profil
 
 ```
 
-```{r warning=FALSE, fig.align='center',  fig.height= 9, fig.width=9}
+```{r warning=FALSE, fig.align='center',  fig.height= 8, fig.width=7.5, echo=FALSE}
 df_city <- read_excel("geocode_latlon.xlsx")
 
 df_city <- df_city %>%
@@ -286,7 +286,7 @@ world <- map_data("world") %>%
 # Creating ggplot with map
 
 map_bg <- ggplot(data = world) +
-  geom_polygon(aes(x = long, y = lat, group = group), fill = "white", colour = "black") +
+  geom_polygon(aes(x = long, y = lat, group = group), fill = "white", colour = "#000123") +
   coord_map() +
   theme_void()
 
@@ -301,20 +301,46 @@ views <- map_bg +
   ) +
   scale_size_continuous(guide = "none", range = c(1, 8)) +
   theme(plot.background = element_rect(fill = "#000123", color = "#000123"),
-        panel.background = element_rect(fill = "#000123", color = "#000123"),
+        panel.background = element_blank(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         axis.text = element_blank(),
         legend.key = element_rect(fill = "#000123", color = "#000123"),
         legend.background = element_rect(fill = "#000123"),
         legend.text = element_text(colour = "white"),
-        legend.title = element_text(colour = "white"),
-        plot.margin = margin(0, 0, 0, 0))
+        legend.title = element_text(colour = "white"))
 
 print(views)
 
 
+# Group by country and calculate mean profile views
+df_city_grouped <- df_city %>%
+  mutate(country_code = substr(address, nchar(address) - 1, nchar(address))) %>%
+  group_by(country_code) %>%
+  summarise(mean_profile_views = mean(mean_profile_views, na.rm = TRUE))
 
+# Convert two-letter country codes to full country names
+df_city_grouped <- left_join(df_city_grouped, eu_countries, by = c("country_code" = "code"))
+
+# Join with the 'world' dataframe
+world <- left_join(world, df_city_grouped, by = c("region" = "name")) 
+world <- world %>% 
+  filter(!is.na(mean_profile_views))
+
+# Create the choropleth map
+choropleth <- map_bg + 
+  geom_polygon(data = world, aes(x = long, y = lat, fill = mean_profile_views, group = group), color = "#000123") +
+  scale_fill_gradient(name = 'Mean Profile Views',
+                      low = "#8c2aef",
+                      high = "#1beaa7",
+                      na.value = "") +
+  theme(plot.background = element_rect(fill = "#000123", color = "#000123"),
+        legend.key = element_rect(fill = "#000123", color = "#000123"),
+        legend.background = element_rect(fill = "#000123"),
+        legend.text = element_text(colour = "white"),
+        legend.title = element_text(colour = "white"))
+
+print(choropleth)
 
 
 ```
@@ -337,8 +363,6 @@ df %>%
   th + theme(legend.position = "right") +
   geom_smooth(aes(colour = factor(has_emoji)), method = "loess", se = FALSE) +
   scale_colour_manual(values = c("#1beaa7", "#8c2aef"), name = "Has Emoji", labels = c("No Emoji", "Contains Emoji"))
-
-
 ```
 
 #### Figure 5: Bubble plot of profile views and number of pictures in profile. A non-linear model (loess method) was fitted on the plot to discern possible patterns and differences between bios with emojis and those without. Size of dots present how detailed the account is.
@@ -354,7 +378,6 @@ df %>%
   th + theme(legend.position = "right") +
   geom_smooth(aes(colour = factor(has_emoji)), method = "loess", se = FALSE) +
   scale_colour_manual(values = c("#1beaa7", "#8c2aef"), name = "Has Emoji", labels = c("No Emoji", "Contains Emoji"))
-
 
 ```
 

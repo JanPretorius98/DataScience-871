@@ -1,0 +1,7 @@
+"0","gg %>%
+  rayshader::plot_gg(width = 3.5, multicore = TRUE, 
+        zoom = 0.85, phi = 35, theta = 30, sunangle = 225, soliddepth = -100)
+"
+"2","Error in hillshade[, , 1] * scales::rescale(shadowmap, c(max_darken, 1)) : 
+  non-conformable arrays
+"
