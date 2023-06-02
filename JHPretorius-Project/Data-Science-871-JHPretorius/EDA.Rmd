@@ -323,7 +323,7 @@ Geographically presenting the data shows that profiles from some countries do in
 
 ####    Figure 4: Lollipop chart of number of users by country. The colour of the lollipops indicate mean profile views.
 
-```{r echo=FALSE}
+```{r echo=FALSE, fig.align='center'}
 
 # Count the number of users per country in the 'df' dataframe
 df_country_users <- df %>%
@@ -355,6 +355,7 @@ ggplot(df_city_grouped, aes(x = reorder(name, -num_users), y = num_users)) +
         panel.grid.minor = element_blank())
 
 ```
+
 ##    Profile characteristics and popularity
 
 The goal of this section is to understand whether certain details on a profile affect popularity on a dating app.
