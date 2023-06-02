@@ -186,7 +186,7 @@ This section concerns finding relationships in the data. I initiate with a graph
 
 ##    Biography characteristics and popularity
 
-Figures 2 and 3 below seek to understand whether there is a difference in mean profile views based on the newly created dummy variables, `has_emoji`, `contains_popular_word`, and `night_owl`. There seem to be some slight differences in mean profile views, supporting the idea that the use of emojis and certain words do suggest higher levels of trust. Being online during night time also may increase profile views, but I view this variable more as a control variable, rather than a causal one, as more people tend to be online during night time than in day time.
+Figure 2 below seeks to present whether there is a difference in mean profile views based on the newly created dummy variables, `has_emoji`, `contains_popular_word`, and `night_owl`. There seem to be some slight differences in mean profile views, supporting the idea that the use of emojis and certain words do suggest higher levels of trust. Being online during night time also may increase profile views, but I view this variable more as a control variable, rather than a causal one, as more people tend to be online during night time than in day time.
 
 #### Figure 2: Boxplots showing effects of a bio containing social media particulars, a popular word, an emoji, and/or being a night owl on profile views.
 
@@ -219,36 +219,11 @@ df %>%
 
 ```
 
-The density plots in figure 2 suggest that those profiles with bios not containing popular words or emojis have a lower mean profile views, whereas those that do have a tendency to have higher profile views. The same observation is present with the night owls, versus the early birds.
-
-#### Figure 3: Density plots showing effects of a bio containing social media particulars, a popular word, an emoji, and/or being a night owl on profile views.
-
-```{r, echo=FALSE, fig.align="center", fig.height= 10, fig.width=8}
-
-df %>%
-  filter(counts_profileVisits < 10000, !is.na(night_owl), !is.na(has_social)) %>%
-  gather("group", "value", has_emoji, contains_popular_word, night_owl, has_social) %>%
-  ggplot(aes(x = counts_profileVisits, fill = factor(value))) +
-  geom_density(alpha = 0.8, colour = "white") +
-  scale_fill_manual(values = c("#1beaa7", "#8c2aef"), 
-                    name = "", 
-                    labels = c("No", "Yes")) +
-  facet_wrap(~ group, labeller = as_labeller(c(has_emoji = "Emoji",
-                                               contains_popular_word = "Popular Words",
-                                               night_owl = "Night Owl",
-                                               has_social = "Social Media"))) +
-  labs(x = "Profile Visits Count", y = "Density", fill = "Category") +
-  th +
-  theme(
-    strip.background = element_blank(),
-    strip.text = element_text(face = "bold", size = 14)
-  )
-
-```
 ##    Geographical characteristics and popularity
 
-By using my Google Maps API, I was able to geocode the locations of every profile in the data. The goal is to visualise how location effects profile views. The code chunk below was used to geocode the data (but is commented out, because there are costs associated with geocoding through the API).
+By using my Google Maps API, I was able to geocode the locations of every profile in the data. The goal is to visualise how location effects profile views. The code chunk below was used to geocode the data.
 ```{r}
+# Note: ommented out, due to costs associated with geocoding through the API
 # df_city <- df %>% 
 #   select(c(city, country, counts_profileVisits)) %>% 
 #   mutate(address = paste0(city, ", ", country)) %>%
@@ -263,7 +238,7 @@ By using my Google Maps API, I was able to geocode the locations of every profil
 # write_csv(df_city, "geocode_latlon.csv")
 
 ```
-
+####    Figure 3: Geographic data visualisation of profile views. Size and colour of bubbles in top panel indicate profile views. Colour of country in the bottom panel indicate profile views.
 ```{r warning=FALSE, fig.align='center',  fig.height= 8, fig.width=7.5, echo=FALSE}
 df_city <- read_excel("geocode_latlon.xlsx")
 
@@ -308,7 +283,7 @@ views <- map_bg +
         legend.key = element_rect(fill = "#000123", color = "#000123"),
         legend.background = element_rect(fill = "#000123"),
         legend.text = element_text(colour = "white"),
-        legend.title = element_text(colour = "white"))
+        legend.title = element_text(colour = "white", face = "bold"))
 
 print(views)
 
@@ -338,18 +313,53 @@ choropleth <- map_bg +
         legend.key = element_rect(fill = "#000123", color = "#000123"),
         legend.background = element_rect(fill = "#000123"),
         legend.text = element_text(colour = "white"),
-        legend.title = element_text(colour = "white"))
+        legend.title = element_text(colour = "white", face = "bold"))
 
 print(choropleth)
 
 
 ```
+Geographically presenting the data shows that profiles from some countries do indeed tend to receive more attention. It is necessary, however, to understand whether there is a different factor carrying mean profile views for different countries. Below I have created lollipop charts that show number of users for each specific region. From figure 4 below, it is clear that the country an individual comes from may not be a good indicator of fame in the data to my disposal. This is because of sample size bias. As such, it is advised to omit this variable from the final model.
 
-```{r}
+####    Figure 4: Lollipop chart of number of users by country. The colour of the lollipops indicate mean profile views.
+
+```{r echo=FALSE}
+
+# Count the number of users per country in the 'df' dataframe
+df_country_users <- df %>%
+  group_by(country) %>%
+  summarise(num_users = n())
+
+# Convert two-letter country codes to full country names in df_country_users
+df_country_users <- left_join(df_country_users, eu_countries, by = c("country" = "code"))
+
+# Summarise mean_profile_views per country in df_city dataframe
+df_city_grouped <- df_city %>%
+  mutate(country_code = substr(address, nchar(address) - 1, nchar(address))) %>%
+  group_by(country_code) %>%
+  summarise(mean_profile_views = mean(mean_profile_views, na.rm = TRUE))
+
+# Join df_city_grouped with df_country_users to add the number of users per country
+df_city_grouped <- left_join(df_city_grouped, df_country_users, by = c("country_code" = "country"))
+
+# Create the lollipop chart with number of users and colored by mean profile views
+ggplot(df_city_grouped, aes(x = reorder(name, -num_users), y = num_users)) +
+  geom_segment(aes(xend = name, yend = 0), color = "white") +
+  geom_point(aes(color = mean_profile_views), size = 3, alpha = 0.6) +
+  coord_flip() +
+  scale_color_gradient(name = 'Mean Profile Views', low = "#8c2aef", high = "#1beaa7") +
+  xlab("") +
+  ylab("Number of Users") + th +
+  theme(legend.position = "right",
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank())
 
 ```
+##    Profile characteristics and popularity
 
-#### Figure 4: Bubble plot of number of kisses received and profile views. A non-linear model (loess method) was once again fitted on the plot to discern possible patterns and differences between bios with emojis and those without. Size of dots present how detailed the account is.
+The goal of this section is to understand whether certain details on a profile affect popularity on a dating app.
+
+#### Figure 4: Bubble plot of number of pictures in profile and profile views. A non-linear model (loess method) was once again fitted on the plot to discern possible patterns and differences between bios with emojis and those without. Size of dots present how detailed the account is.
 
 ```{r echo=FALSE, fig.align="center", message=FALSE}
 
@@ -366,6 +376,12 @@ df %>%
 ```
 
 #### Figure 5: Bubble plot of profile views and number of pictures in profile. A non-linear model (loess method) was fitted on the plot to discern possible patterns and differences between bios with emojis and those without. Size of dots present how detailed the account is.
+
+```{r}
+
+
+```
+
 
 ```{r echo=FALSE, fig.align="center", message=FALSE}
 df %>%
