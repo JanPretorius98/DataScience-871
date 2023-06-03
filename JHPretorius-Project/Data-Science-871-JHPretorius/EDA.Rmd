@@ -360,6 +360,13 @@ ggplot(df_city_grouped, aes(x = reorder(name, -num_users), y = num_users)) +
 
 The goal of this section is to understand whether certain details on a profile affect popularity on a dating app.
 
+```{r}
+
+# Produce a Ridgline plot to look at how profile views are distributed for flirtInterests_chat, flirtInterests_friends, flirtInterests_date & isMobile 
+
+```
+
+
 #### Figure 4: Bubble plot of number of pictures in profile and profile views. A non-linear model (loess method) was once again fitted on the plot to discern possible patterns and differences between bios with emojis and those without. Size of dots present how detailed the account is.
 
 ```{r echo=FALSE, fig.align="center", message=FALSE}
