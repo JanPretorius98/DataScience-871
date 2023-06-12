@@ -1,3 +1,4 @@
+"0","# Note: ommented out, due to costs associated with geocoding through the API"
 "0","# df_city <- df %>% "
 "0","#   select(c(city, country, counts_profileVisits)) %>% "
 "0","#   mutate(address = paste0(city, "", "", country)) %>%"
