@@ -3,7 +3,3 @@ body {
   text-align: justify;
   background-color: #000123;
 }
-
-tags$style(type="text/css",
-  "#wordcloud2Output {display: flex; justify-content: center;}"
-)

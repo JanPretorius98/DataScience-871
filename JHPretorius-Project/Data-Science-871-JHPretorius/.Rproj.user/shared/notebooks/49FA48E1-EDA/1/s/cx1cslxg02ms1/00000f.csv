@@ -1,4 +1,0 @@
-"0","df <- df %>%"
-"0","  mutate(night_owl = ifelse(hour(hms(substr(lastOnlineDate, 12, 19))) > 18 | "
-"0","                            hour(hms(substr(lastOnlineDate, 12, 19))) < 6, 1, 0))"
-"0",""

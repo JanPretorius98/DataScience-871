@@ -25,9 +25,9 @@ pacman::p_load(dplyr, ggplot2, tidyverse, rsample, caret, glmnet, vip, pdp, stri
                viridis, eurostat, corrplot, GGally, reshape2, grid, ellipse)
 
 # Define plot themes and palettes
-palette <- c("#1beaa7", "#00d9d3", "#C93A86", "#00a5ff", "#007bff", "#8c2aef")
+palette <- c("#1beaa7", "#00d9d3", "#00c2ff", "#00a5ff", "#007bff", "#8c2aef")
 
-th <- theme(legend.position = "bottom",
+th <- theme(legend.position = "right",
             panel.background = element_blank(),
             plot.background = element_rect(fill = "#000123", color = "#000123"),
             panel.grid.major = element_line(color="white", size = 0.1),
@@ -81,7 +81,7 @@ A random forest model is employed in this study due to its robust ability to dis
 
 # Part 1: Transformation and Cleaning
 
-The data contain around 30 variables, containing information on a particular profile and other demographics. An extract of the data is included below, along with Table 1 that describes some of the relevant variables. The data set only contains data on individuals that identify as female. To this end, I am essentially attempting to understand which factors determine the behaviour of individuals interested in females.
+The dataset in consideration comprises approximately 30 variables, each encapsulating specific attributes pertaining to individual profiles and related demographic information. An excerpt of the dataset is provided subsequently, supplemented by Table 1 which elucidates a selection of significant variables. It's noteworthy to mention that the dataset solely encompasses data of individuals identifying as female. As such, the core objective of this analysis is to discern the determinants influencing the behavioural patterns of individuals displaying interest in females.
 
 #### Head of dataframe
 
@@ -92,20 +92,20 @@ head(df)
 #### Table 1: Description of variables in data set.
 
 | Variable               | Description                                                                                                                                 |
-|--------------------|----------------------------------------------------|
+|---------------------|---------------------------------------------------|
 | `genderLooking`        | Preferred gender the subject is looking to engage with. Represented as 'M' for male, 'F' for female, 'both' for male and female, or 'none'. |
 | `age`                  | Age of the individual.                                                                                                                      |
 | `counts_details`       | How complete the profile is. Proportion of detail in the account. Measured from 0.0-1.0.                                                    |
 | `counts_pictures`      | How many pictures does the profile contain.                                                                                                 |
 | `counts_profileVisits` | How many times the profile has been viewed.                                                                                                 |
 | `counts_kisses`        | Number of 'kisses' or 'likes' received by profile.                                                                                          |
-| `flirtInterests_*`     | What the individual is interested in. '*' represents: 'chat', 'date', 'friends'.                                                             |
+| `flirtInterests_*`     | What the individual is interested in. '\*' represents: 'chat', 'date', 'friends'.                                                           |
 | `verified`             | Whether the profile has been verified or not.                                                                                               |
 | `lang_count`           | Number of languages spoken by an individual.                                                                                                |
-| `lang_*`               | Language spoken by an individual. '*' represents: 'en' (English), 'de' (German), 'fr' (French), 'it' (Italian), 'es' (Spanish).              |
+| `lang_*`               | Language spoken by an individual. '\*' represents: 'en' (English), 'de' (German), 'fr' (French), 'it' (Italian), 'es' (Spanish).            |
 | `whazzup`              | A phrase that represents the profile's 'bio'.                                                                                               |
 
-The raw data is already very useable, but some new variables must be added to produce better models. The first data transformation is to consider the language used by individuals in their profiles. To this end, there are two main operations when discerning the effect of language use on individual behaviour: words used in biographies, and emoji use. Both these factors may reveal characteristics underlying confidence and perceived desirability.
+The original dataset is already quite useable, but we can produce better models by adding some new variables. The first step is to take a closer look at the language people use in their profiles. I am focusing on two main things here: the words used in the profile descriptions, and the use of emojis. Both of these could give insights into the person's confidence and desirability.
 
 The code chunk below creates two new dummy variables, `has_emoji` and `contains_popular_word`. `has_emoji` attributes a '1' based on whether `wazzup` contains an emoji. `contains_popular_word` attributes a '1' based on whether `wazzup` contains a popular word. The code chunk also outputs which words are the most popular in a word cloud. (The word cloud is a dynamic image that shows the popularity when hovering over a specific word)
 
@@ -160,13 +160,15 @@ words <- words %>%
   select(c(word, popularity_index))
 
 ```
-####    Figure 1: Word cloud of popular words in bios.
+
+#### Figure 1: Word cloud of popular words in bios.
+
 ```{r echo=FALSE, fig.align="center"}
 # Create Word Cloud
 wordcloud2(words, size=1.6, color='random-light', backgroundColor = "#000123")
 ```
 
-Interestingly, one may see that popular words (those are words that get many profile views and are used frequently), are social media tags. That is, individuals that have their social media details, such as their Instagram handle, Facebook name, and Snapchat handle, tend to get more profile views. As such, I will create another variable, called `has_social` that captures whether a profile contains social media particulars. Due to endogeneity and possible multicollinearity between `contains_popular_word` and `has_social`, only one can be used in modelling. Whichever delivers the most accurate result will then be used.
+Interestingly, one may see that popular words (those are words that get many profile views and are used frequently), are social media tags. That is, individuals that have their social media details, such as their Instagram handle, Facebook name, and Snapchat handle, on their account tend to get more profile views. As such, I will create another variable, called `has_social` that captures whether a profile contains social media particulars. Due to endogeneity and possible multicollinearity between `contains_popular_word` and `has_social`, only one can be used in modelling. Whichever delivers the most accurate result will then be used.
 
 ```{r warning=FALSE}
 
@@ -177,7 +179,6 @@ df <- df %>%
   replace_na(list(has_social = 0))
 
 ```
-
 
 Another operation pertains to the time an individual is online. I add a new dummy variable called `night_owl` to the dataframe based on whether a person was online at night or not. The motivation behind this is that dating apps tend to be more popular in the evenings, than during daytime.
 
@@ -199,14 +200,14 @@ df$counts_picturesStd <- scale(df$counts_pictures)
 
 ```
 
-
 # Part 2: Exploratory Data Analysis
 
-This section concerns finding relationships in the data. I initiate with a graphical analysis of the different variables to determine their relevance. Thereafter, I made use of a stepwise regression to determine which variables produce the best fitting model. However, it is important to not disregard some variables because they did not pass the 'stepwise' test. As such the final model will be advised by the results of the stepwise regression, but not absolutely decided by it.
+The goal of this section is to uncover relationships within the dataset. Starting off, a visual analysis of the different variables is conducted to assess their potential relevance. This is followed by a stepwise regression to help identify the variables that might lead to the most accurate model. However, it's worth noting that the results of the stepwise regression should guide, but not entirely determine, the final model selection. Certain variables might not pass the 'stepwise' threshold, yet they might still hold valuable insights.
 
-As briefly mentioned in the introduction, some variables influence number of likes, whereas others influence profile views. The motivation behind this distinction refers to the fact that it does not make sense that some profile characteristics that are observed are only seen once a profile is being viewed. A profile biography, for example. There is, however, a strong correlation between profile views and profile likes. Figure 2 below visualises this relationship.
+As alluded to in the introduction, it becomes clear that certain variables influence the number of likes, while others predominantly affect profile views. This distinction is particularly important because some profile characteristics are only observable when a profile is actually being viewed - a profile biography, for example. Nonetheless, a substantial correlation between profile views and likes is evident. This relationship is visually represented in Figure 2 below.
 
 #### Figure 2: Bubble plot of profile views and number of pictures in profile. A non-linear model (loess method) was fitted on the plot to discern possible patterns and differences between bios with emojis and those without. Size of dots present how detailed the account is.
+
 ```{r echo=FALSE, fig.align="center", message=FALSE}
 df %>%
   filter(counts_profileVisits < 100000) %>% 
@@ -215,13 +216,13 @@ df %>%
   scale_fill_manual(values = c("#1beaa7", "#8c2aef"), name = "Has Emoji", labels = c("No Emoji", "Contains Emoji")) +
   scale_size(range = c(0.1, 4)) +
   labs(x = "Profile Visits Count", y = "Number of Kisses", size = "Details Count", fill = "Contains Emoji") +
-  th + theme(legend.position = "right") +
+  th +
   geom_smooth(aes(colour = factor(has_emoji)), method = "loess", se = FALSE) +
   scale_colour_manual(values = c("#1beaa7", "#8c2aef"), name = "Has Emoji", labels = c("No Emoji", "Contains Emoji"))
 
 ```
 
-##    Biography characteristics and popularity
+## Biography characteristics and popularity
 
 Figure 3 below seeks to present whether there is a difference in the distribution of likes received based on the newly created dummy variables, `has_emoji`, `contains_popular_word`, and `night_owl`. There seem to be some slight differences in likes received, supporting the idea that the use of emojis and certain words do suggest higher levels of trust. Being online during night time also may increase profile views, but I view this variable more as a control variable, rather than a causal one, as more people tend to be online during night time than in day time.
 
@@ -246,7 +247,8 @@ plot1 <- df %>%
   theme(
     strip.background = element_blank(),
     strip.text = element_text(face = "bold", size = 14),
-    axis.text.x = element_blank()
+    axis.text.x = element_blank(),
+    legend.position = "none"
   ) +
   scale_y_continuous(breaks = c(-1, 0, 1, 2))
 
@@ -271,21 +273,25 @@ plot2 <- df %>%
   ) +
   scale_y_continuous(breaks = c(-1, 0, 1, 2))
 ```
+
 <div class="row">
-<div class="col-md-6">
+
+::: col-md-6
 ```{r echo=FALSE}
 plot1
 ```
-</div>
-<div class="col-md-6">
+:::
+
+::: col-md-6
 ```{r echo=FALSE}
 plot2
 ```
-</div>
+:::
 
-##    Geographical characteristics and popularity
+## Geographical characteristics and popularity
 
 By using the Google Maps API, I was able to geocode the locations of every profile in the data. The goal is to visualise how location effects profile views. The code chunk below was used to geocode the data.
+
 ```{r}
 # Note: commented out, due to costs associated with geocoding through the API
 # df_city <- df %>% 
@@ -302,7 +308,9 @@ By using the Google Maps API, I was able to geocode the locations of every profi
 # write_csv(df_city, "geocode_latlon.csv")
 
 ```
-####    Figure 4: Geographic data visualisation of profile views. Size and colour of bubbles in top panel indicate profile views. Colour of country in the bottom panel indicate profile views.
+
+#### Figure 4: Geographic data visualisation of profile views. Size and colour of bubbles in top panel indicate profile views. Colour of country in the bottom panel indicate profile views.
+
 ```{r warning=FALSE, fig.align='center',  fig.height= 8, fig.width=7.65, echo=FALSE}
 df_city <- read_excel("geocode_latlon.xlsx")
 
@@ -383,9 +391,10 @@ print(choropleth)
 
 
 ```
+
 Geographically presenting the data shows that profiles from some countries do indeed tend to receive more attention. It is necessary, however, to understand whether there is a different factor carrying mean profile views for different countries. Below I have created lollipop charts that show number of users for each specific region. From figure 4 below, it is clear that the country an individual comes from may not be a good indicator of fame in the data to my disposal. This is because of sample size bias. As such, it is advised to omit this variable from the final model.
 
-####    Figure 5: Lollipop chart of number of users by country. The colour of the lollipops indicate mean profile views.
+#### Figure 5: Lollipop chart of number of users by country. The colour of the lollipops indicate mean profile views.
 
 ```{r echo=FALSE, fig.align='center'}
 
@@ -409,7 +418,7 @@ df_city_grouped <- left_join(df_city_grouped, df_country_users, by = c("country_
 # Create the lollipop chart with number of users and colored by mean profile views
 ggplot(df_city_grouped, aes(x = reorder(name, -num_users), y = num_users)) +
   geom_segment(aes(xend = name, yend = 0), color = "white") +
-  geom_point(aes(color = mean_profile_views), size = 3, alpha = 0.6) +
+  geom_point(aes(color = mean_profile_views), size = 3, alpha = 0.8) +
   coord_flip() +
   scale_color_gradient(name = 'Mean Profile Views', low = "#8c2aef", high = "#1beaa7") +
   xlab("") +
@@ -420,15 +429,16 @@ ggplot(df_city_grouped, aes(x = reorder(name, -num_users), y = num_users)) +
 
 ```
 
-##    Profile characteristics and popularity
+## Other profile characteristics and popularity
 
 The goal of this section is to understand whether certain details on a profile affect popularity on a dating app.
 
-####    Figure 6: Correlogram of profile characteristics and number of likes received.
+#### Figure 6: Correlogram of profile characteristics and number of likes received.
+
 ```{r warning=FALSE, fig.align='center',  fig.height= 6.81, fig.width=8, echo=FALSE}
 
 # Calculate the correlation matrix
-correlation_matrix <- cor(df[c("counts_kissesStd", "age","flirtInterests_chat", "flirtInterests_friends", 
+correlation_matrix <- cor(df[c("counts_kissesStd", "age", "lang_count", "flirtInterests_chat", "flirtInterests_friends", 
                                "flirtInterests_date", "isMobile", "verified", "shareProfileEnabled")])
 
 # Melt the correlation matrix
@@ -438,7 +448,7 @@ correlation_matrix_melt <- melt(correlation_matrix)
 ggplot(data = correlation_matrix_melt, aes(x=Var1, y=Var2, fill=value)) +
     geom_tile(color = "white") +
     geom_text(aes(Var1, Var2, label = round(value, 2)), color = "black", size = 4) +
-    scale_fill_gradient2(low = "#1beaa7", high = "#8c2aef", mid = "white", 
+    scale_fill_gradient2(low = "#8c2aef", high = "#1beaa7", mid = "white", 
                          midpoint = 0, limit = c(-1,1), space = "Lab", 
                          name="Correlation") +
     th + 
@@ -454,32 +464,81 @@ ggplot(data = correlation_matrix_melt, aes(x=Var1, y=Var2, fill=value)) +
     coord_fixed()
 
 ```
+Language may also play a role in popularity. In figure 6 I accounted for this by acknowledging the number of languages spoken as a possible predictor of popularity. In figure 7 below I visualise the distribution of the number of likes received based on specific spoken languages.
+
+####    Figure 7: Ridgeline plot of languages spoken and number of likes received. Dashed line shows overall mean profile likes.
+
+```{r warning=FALSE, fig.align='center',  fig.height= 8, fig.width=8, echo=FALSE, message=FALSE}
+
+df_long <- df %>%
+  pivot_longer(cols = starts_with("lang_"), 
+               names_to = "language", 
+               values_to = "spoken") %>%
+  filter(spoken == TRUE) %>%
+  mutate(language = str_remove(language, "lang_"),
+         language = recode(language,
+                           "de" = "German",
+                           "en" = "English",
+                           "es" = "Spanish",
+                           "fr" = "French",
+                           "it" = "Italian",
+                           "pt" = "Portuguese"))
+
+df_long %>%
+  filter(language != "count", counts_kisses < 1000) %>% 
+  ggplot(aes(x = counts_kisses, y = language, fill = language)) +
+  geom_density_ridges(scale = 3, rel_min_height = 0.01, colour = "white", alpha = 0.8) +
+  scale_fill_manual(values = palette) +
+  geom_vline(aes(xintercept = 157.0227), linetype = "dashed", colour = "white") +
+  theme_ridges() +
+  th +
+  theme(legend.position = "none") +
+  labs(x = "Profile Kisses Count", y = "Language") +
+  annotate("text", x = 170, y = Inf, label = "Mean Kisses Received (~160)", vjust = 2, hjust = 0, size = 4, colour = "white")
 
 
-#### Figure 7: Bubble plot of number of pictures in profile and likes received. A non-linear model (loess method) was once again fitted on the plot to discern possible patterns and differences between bios with emojis and those without. Size of dots present how detailed the account is.
-
-```{r echo=FALSE, fig.align="center", message=FALSE}
-
-df %>%
-  ggplot(aes(y = counts_kissesStd, x = counts_picturesStd)) +
-  geom_point(aes(fill = factor(has_emoji), size = counts_details), pch = 21, alpha = 0.8, colour = "white") +
-  scale_fill_manual(values = c("#1beaa7", "#8c2aef"), name = "Has Emoji", labels = c("No Emoji", "Contains Emoji")) +
-  scale_size(range = c(0.2, 3)) +
-  labs(y = "Profile Visits Count", x = "Pictures Count", size = "Details Count", fill = "Contains Emoji") +
-  th + theme(legend.position = "right") +
-  geom_smooth(aes(colour = factor(has_emoji)), method = "loess", se = FALSE) +
-  scale_colour_manual(values = c("#1beaa7", "#8c2aef"), name = "Has Emoji", labels = c("No Emoji", "Contains Emoji"))
 ```
 
+
+
+####    Figure 8: Bubble plot of number of pictures in profile and likes received. A non-linear model (loess method) was once again fitted on the plot to discern possible patterns and differences between bios with emojis and those without. Size of dots present how detailed the account is.
+
+```{r echo=FALSE, fig.align="center", message=FALSE, warning=FALSE}
+
+df_summary <- df %>%
+  group_by(counts_pictures, has_social) %>%
+  summarise(mean_kisses = mean(counts_kisses, na.rm = TRUE), 
+            .groups = "drop")
+
+df_summary %>%
+  filter(counts_pictures < 22 & counts_pictures > 0) %>% 
+  ggplot(aes(x = as.factor(counts_pictures), y = mean_kisses, colour = factor(has_social), group = (has_social))) +
+  geom_line(size = 1) +
+  geom_point() +
+  scale_colour_manual(values = c("#1beaa7", "#8c2aef"), 
+                    name = "Has Social Media", 
+                    labels = c("No Social", "Contains Social")) +
+  labs(x = "Pictures Count", 
+       y = "Mean Profile Kisses Count", 
+       colour = "Contains Social Media") +
+  th +
+  theme(legend.position = "right")
+
+```
 
 ```{r}
 
 
 ```
 
+## Total Data Visualisation
 
+```{r}
+
+# Create a Sankey to visualise all variables
+
+```
 
 # Part 3: Modelling & Results
 
 # Discussion & Conclusion
-
