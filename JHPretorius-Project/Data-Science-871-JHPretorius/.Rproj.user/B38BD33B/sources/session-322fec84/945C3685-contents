@@ -22,7 +22,7 @@ options(scipen = 999)
 # Load packages in use
 pacman::p_load(dplyr, ggplot2, tidyverse, rsample, caret, glmnet, vip, pdp, stringr, 
                tidytext, emoji, stopwords, ggridges, wordcloud2, ggmap, readxl, maps,
-               viridis, eurostat, corrplot, GGally, reshape2, grid, ellipse)
+               viridis, eurostat, corrplot, GGally, reshape2, grid, ellipse, networkD3)
 
 # Define plot themes and palettes
 palette <- c("#1beaa7", "#00d9d3", "#00c2ff", "#00a5ff", "#007bff", "#8c2aef")
@@ -501,7 +501,7 @@ df_long %>%
 
 
 
-####    Figure 8: Bubble plot of number of pictures in profile and likes received. A non-linear model (loess method) was once again fitted on the plot to discern possible patterns and differences between bios with emojis and those without. Size of dots present how detailed the account is.
+####    Figure 8: Dotted line plot of the number of pictures in profile and likes received. The mean number of likes received by number of photos was used to plot this relationship. Lines split based on social media tag presence in profile.
 
 ```{r echo=FALSE, fig.align="center", message=FALSE, warning=FALSE}
 
@@ -525,17 +525,20 @@ df_summary %>%
   theme(legend.position = "right")
 
 ```
-
 ```{r}
+df <- df %>% 
+  filter(!is.na(night_owl))
+# Define full and null model
+full.model <- lm(counts_kisses ~ counts_profileVisits + genderLooking + age + counts_details + counts_pictures + counts_fans +
+                 flirtInterests_chat + flirtInterests_friends + flirtInterests_date + isFlirtstar + isHighlighted + isInfluencer + isMobile +
+                   lang_count + lang_fr + lang_en + lang_de + verified + shareProfileEnabled + has_emoji + has_social + night_owl, data = df)
+null.model <- lm(counts_kisses ~ 1, data = df)
 
+# Perform stepwise regression
+stepwise.model <- step(null.model, scope = list(lower = null.model, upper = full.model), direction = "both")
 
-```
-
-## Total Data Visualisation
-
-```{r}
-
-# Create a Sankey to visualise all variables
+# Display the final model
+summary(stepwise.model)
 
 ```
 
