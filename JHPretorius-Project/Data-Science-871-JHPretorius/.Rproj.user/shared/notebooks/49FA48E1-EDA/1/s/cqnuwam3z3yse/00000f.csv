@@ -1,0 +1,6 @@
+"0",""
+"0","# Define training and testing sets for likes prediction"
+"0","split_kisses <- initial_split(df, prop = 0.7, strata = ""Profile_Likes"")"
+"0","training_kisses <- training(split_kisses)"
+"0","testing_kisses <- testing(split_kisses)"
+"0",""

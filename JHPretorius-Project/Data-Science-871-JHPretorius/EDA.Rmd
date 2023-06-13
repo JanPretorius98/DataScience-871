@@ -22,7 +22,8 @@ options(scipen = 999)
 # Load packages in use
 pacman::p_load(dplyr, ggplot2, tidyverse, rsample, caret, glmnet, vip, pdp, stringr, 
                tidytext, emoji, stopwords, ggridges, wordcloud2, ggmap, readxl, maps,
-               viridis, eurostat, corrplot, GGally, reshape2, grid, ellipse, networkD3)
+               viridis, eurostat, corrplot, GGally, reshape2, grid, rpart, rpart.plot, 
+               randomForest, xgboost)
 
 # Define plot themes and palettes
 palette <- c("#1beaa7", "#00d9d3", "#00c2ff", "#00a5ff", "#007bff", "#8c2aef")
@@ -188,6 +189,23 @@ df <- df %>%
                             hour(hms(substr(lastOnlineDate, 12, 19))) < 6, 1, 0))
 
 ```
+
+Then, it may be beneficial to categorise profile views and likes as 'low', 'medium', and 'high'. This was done by splitting the variables based on quantiles.
+
+```{r}
+
+# Categorize counts_profileVisits and counts_kisses based on quartiles
+df$Profile_Views <- cut(df$counts_profileVisits, 
+                                     breaks = quantile(df$counts_profileVisits, probs = 0:4/4, na.rm = TRUE), 
+                                     labels = c("Low", "Low Mid", "High Mid", "High"), include.lowest = TRUE)
+
+df$Profile_Likes <- cut(df$counts_kisses, 
+                              breaks = quantile(df$counts_kisses, probs = 0:4/4, na.rm = TRUE), 
+                              labels = c("Low", "Low Mid", "High Mid", "High"), include.lowest = TRUE)
+
+
+```
+
 
 Finally, before kicking off with the exploratory data analysis, it might be fitting to standardise the following three variables: `counts_profileVisits`, `counts_kisses`, and `counts_pictures`. This operation may help to more clearly visualise how some variables influence each other.
 
@@ -525,23 +543,202 @@ df_summary %>%
   theme(legend.position = "right")
 
 ```
-```{r}
-df <- df %>% 
-  filter(!is.na(night_owl))
-# Define full and null model
-full.model <- lm(counts_kisses ~ counts_profileVisits + genderLooking + age + counts_details + counts_pictures + counts_fans +
-                 flirtInterests_chat + flirtInterests_friends + flirtInterests_date + isFlirtstar + isHighlighted + isInfluencer + isMobile +
-                   lang_count + lang_fr + lang_en + lang_de + verified + shareProfileEnabled + has_emoji + has_social + night_owl, data = df)
-null.model <- lm(counts_kisses ~ 1, data = df)
-
-# Perform stepwise regression
-stepwise.model <- step(null.model, scope = list(lower = null.model, upper = full.model), direction = "both")
-
-# Display the final model
-summary(stepwise.model)
-
-```
 
 # Part 3: Modelling & Results
 
+After data preparation, we will split our data into training and testing datasets.
+
+```{r}
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Define training and testing sets for profile visits prediction
+split_visits <- initial_split(df, prop = 0.7, strata = "Profile_Views")
+training_visits <- training(split_visits)
+testing_visits <- testing(split_visits)
+
+
+```
+
+Similarly, we create training and testing sets for profile likes prediction:
+
+```{r}
+
+# Define training and testing sets for likes prediction
+split_kisses <- initial_split(df, prop = 0.7, strata = "Profile_Likes")
+training_kisses <- training(split_kisses)
+testing_kisses <- testing(split_kisses)
+
+```
+
+##    Decision Tree Model
+
+Now, we can proceed with training our decision tree models:
+
+```{r}
+
+# Train decision tree model for profile visits
+visits_tree <- rpart(formula = Profile_Views ~ isOnline + night_owl + age,
+                     data = training_visits, method = "class")
+summary(visits_tree)
+
+# Train decision tree model for profile likes
+kisses_tree <- rpart(formula = Profile_Likes ~ has_emoji + has_social + Profile_Views + counts_pictures + lang_count + flirtInterests_chat + flirtInterests_date + flirtInterests_friends + counts_details,
+                     data = training_kisses, method = "class")
+summary(kisses_tree)
+
+
+```
+
+After building the models, let's make predictions on the testing data and evaluate the performance of our models:
+
+```{r}
+
+# Predict on testing data
+predict_visits <- predict(visits_tree, newdata = testing_visits, type = "class")
+predict_kisses <- predict(kisses_tree, newdata = testing_kisses, type = "class")
+
+# Confusion matrices for evaluation
+confusionMatrix(predict_visits, testing_visits$Profile_Views)
+confusionMatrix(predict_kisses, testing_kisses$Profile_Likes)
+
+
+```
+
+Finally, we visualize the decision trees for a better understanding of our models:
+
+```{r}
+
+# Visualize the decision trees
+rpart.plot(visits_tree, extra = 1)
+rpart.plot(kisses_tree, extra = 1)
+
+```
+##   Random Forest Model
+
+```{r}
+# Set seed for reproducibility
+# Set seed for reproducibility
+set.seed(123)
+
+# Filter out NA values
+training_visits <- training_visits %>% filter(!is.na(night_owl))
+
+# Random Forest model for profile visits
+visits_rf <- randomForest(formula = Profile_Views ~ isOnline + night_owl + age,
+                          data = training_visits,
+                          importance = TRUE, 
+                          ntree = 500)
+
+# View model summary
+visits_rf
+
+# Random Forest model for profile likes
+kisses_rf <- randomForest(formula = Profile_Likes ~ has_emoji + has_social + Profile_Views + counts_pictures + lang_count + flirtInterests_chat + flirtInterests_date + flirtInterests_friends + counts_details,
+                          data = training_kisses,
+                          importance = TRUE, 
+                          ntree = 500)
+
+# View model summary
+kisses_rf
+
+# Predict on test data
+visits_rf_pred <- predict(visits_rf, newdata = testing_visits)
+kisses_rf_pred <- predict(kisses_rf, newdata = testing_kisses)
+
+# Confusion matrices
+confusionMatrix(visits_rf_pred, testing_visits$Profile_Views)
+confusionMatrix(kisses_rf_pred, testing_kisses$Profile_Likes)
+
+# Variable importance plot
+varImpPlot(kisses_rf)
+
+```
+##    XGBoost Model
+```{r}
+
+library(xgboost)
+
+# Convert data to matrix format which is required by xgboost
+train_matrix_visits <- model.matrix(Profile_Views ~ ., data = training_visits)
+test_matrix_visits <- model.matrix(Profile_Views ~ ., data = testing_visits)
+
+# Define parameters 
+params <- list(
+  objective = "multi:softmax", # multiclass classification 
+  num_class = 4, # number of levels in dependent variable
+  eta = 0.01, 
+  max_depth = 6, 
+  eval_metric = "mlogloss" # loss function for multiclass classification
+)
+
+# Train the model
+visits_xgb <- xgboost(
+  data = train_matrix_visits,
+  label = as.numeric(training_visits$Profile_Views), 
+  params = params,
+  nrounds = 100,
+  print_every_n = 10
+)
+
+# Predict on test data
+visits_xgb_pred <- predict(visits_xgb, newdata = test_matrix_visits)
+visits_xgb_pred <- as.factor(visits_xgb_pred)
+
+# Convert data to matrix format for profile likes
+train_matrix_kisses <- model.matrix(Profile_Likes ~ ., data = training_kisses)
+test_matrix_kisses <- model.matrix(Profile_Likes ~ ., data = testing_kisses)
+
+# Train the model
+kisses_xgb <- xgboost(
+  data = train_matrix_kisses,
+  label = as.numeric(training_kisses$Profile_Likes), 
+  params = params,
+  nrounds = 100,
+  print_every_n = 10
+)
+
+# Predict on test data
+kisses_xgb_pred <- predict(kisses_xgb, newdata = test_matrix_kisses)
+kisses_xgb_pred <- as.factor(kisses_xgb_pred)
+
+# Confusion matrices
+confusionMatrix(visits_xgb_pred, testing_visits$Profile_Views)
+confusionMatrix(kisses_xgb_pred, testing_kisses$Profile_Likes)
+
+
+```
+
+
 # Discussion & Conclusion
+
+The confusion matrix provides an overview of the performance of your classification model, and the additional statistics give more detailed insight into the model's predictive power.
+
+Let's interpret the statistics for each confusion matrix.
+
+Confusion Matrix 1:
+
+Accuracy: The overall accuracy of the model is 31.43%. This means that the model correctly predicted the class (Low, Low Mid, High Mid, High) for around 31.43% of the observations in the test set. Given that random guessing would result in 25% accuracy (for a 4-class problem), the model performs slightly better than random guessing.
+
+Kappa: The Kappa statistic is 0.0854, indicating a poor agreement between the predictions and the actual classes, as it is close to 0.
+
+Sensitivity (Class Low): Sensitivity, also known as True Positive Rate or Recall, measures the proportion of actual positives that are correctly identified. For class "Low", this is 71.57%, indicating that the model correctly identifies about 72% of the actual "Low" class instances.
+
+Specificity (Class Low): Specificity, also known as True Negative Rate, measures the proportion of actual negatives that are correctly identified. For class "Low", this is 43.74%, which means that the model correctly identifies about 44% of the instances that are not in the "Low" class.
+
+The confusion matrix itself shows the counts of true and false positives and negatives. For example, the model predicted "Low" 717 times, but it was correct only 214 times. The model never predicted "Low Mid" or "High Mid".
+
+Confusion Matrix 2:
+
+Accuracy: The model's overall accuracy is much better in this case, at 71.92%. This is a significant improvement over the first model.
+
+Kappa: The Kappa statistic is 0.6256, indicating a moderate to substantial agreement between predictions and actual classes.
+
+Sensitivity (Class Low): For class "Low", the sensitivity is 80.66%, indicating that the model correctly identifies about 81% of the actual "Low" class instances.
+
+Specificity (Class Low): For class "Low", the specificity is 94.03%, indicating that the model correctly identifies about 94% of the instances that are not in the "Low" class.
+
+The confusion matrix again shows the counts of true and false positives and negatives. For example, the model predicted "Low" 299 times, and it was correct 246 times. This model makes predictions for all classes, unlike the first model.
+
+The other statistics provide further insight into the model's performance, with measures for each class separately. Overall, the second model is performing much better than the first one.
