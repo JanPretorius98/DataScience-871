@@ -428,7 +428,7 @@ print(choropleth)
 
 ```
 
-When we visualized the data on a map, we noticed that profiles from certain countries tend to get more views. But there's more to the story than geography.
+When the data is visualized on a map, one notices that profiles from certain countries tend to get more views. But there's more to the story than geography.
 
 I produced a lollipop chart (figure 5 below) to show the number of users in each region, with the colour of the lollipop indicating mean profile views. What we see is interesting - a country's overall popularity didn't necessarily match up with the number of profile views. This discrepancy can be chalked up to what we call 'sample size bias.' Simply put, countries with less users naturally have a higher total number of views, due to a few very popular individuals pushing up the numbers.
 
@@ -579,7 +579,7 @@ df_summary %>%
 
 # Part 3: Modelling & Results
 
-After data preparation and exploration, we can proceeed with modelling. As a part of the modelling approach for this analysis, I have elected to implement two popular machine learning techniques: decision trees and random forests. These methods were chosen due to their interpretability, effectiveness in handling complex datasets, and their capacity for both classification and regression tasks.
+After data preparation and exploration, I proceeded with modelling. As a part of the modelling approach for this analysis, I have elected to implement two popular machine learning techniques: decision trees and random forests. These methods were chosen due to their interpretability, effectiveness in handling complex datasets, and their capacity for both classification and regression tasks.
 
 In each of these chosen techniques, two separate models were trained to serve distinct predictive purposes. The first model targets the prediction of profile views, while the second model aims at forecasting profile likes. This dual-model approach was adopted in recognition of the distinct factors that could potentially influence these two different measures of user engagement. Each model is trained on a different set of predictor variables, carefully chosen based on the insights gathered during the data exploration phase.
 
