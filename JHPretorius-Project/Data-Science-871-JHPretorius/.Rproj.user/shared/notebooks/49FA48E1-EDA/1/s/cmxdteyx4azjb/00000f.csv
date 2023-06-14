@@ -1,8 +1,0 @@
-"0",""
-"0","library(xgboost)"
-"0",""
-"0","# Convert data to matrix format which is required by xgboost"
-"0","train_matrix_visits <- model.matrix(Profile_Views ~ ., data = training_visits)"
-"2","Error in `contrasts<-`(`*tmp*`, value = contr.funs[1 + isOF[nn]]) : 
-  contrasts can be applied only to factors with 2 or more levels
-"

@@ -1,7 +1,0 @@
-"0",""
-"0","social <- ""instagram|insta|facebook|fb|snapchat|snap"""
-"0","df <- df %>%"
-"0","  mutate(whazzup = tolower(whazzup),"
-"0","         has_social = as.numeric(str_detect(whazzup, social))) %>%"
-"0","  replace_na(list(has_social = 0))"
-"0",""

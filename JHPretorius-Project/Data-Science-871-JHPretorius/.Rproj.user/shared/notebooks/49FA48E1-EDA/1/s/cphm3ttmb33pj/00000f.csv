@@ -1,0 +1,5 @@
+"0",""
+"0","df$counts_profileVisitsStd <- scale(df$counts_profileVisits)"
+"0","df$counts_kissesStd <- scale(df$counts_kisses)"
+"0","df$counts_picturesStd <- scale(df$counts_pictures)"
+"0",""

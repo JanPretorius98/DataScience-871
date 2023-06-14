@@ -3,3 +3,7 @@ body {
   text-align: justify;
   background-color: #000123;
 }
+
+h1, h2, h3 {
+  text-align: center;
+}
