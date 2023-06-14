@@ -4,6 +4,6 @@ body {
   background-color: #000123;
 }
 
-h1, h2, h3 {
+h1, h2 {
   text-align: center;
 }

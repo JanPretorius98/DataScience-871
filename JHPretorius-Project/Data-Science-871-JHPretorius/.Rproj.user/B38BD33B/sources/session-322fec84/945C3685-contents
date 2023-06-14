@@ -756,7 +756,7 @@ In conclusion, the analysis suggests that the second model is more accurate and 
 
 Figure 10 below shows the importance of each variable in terms of predictive power for the profile likes random forest model.
 
-#### Figure 10: Results of random forest model visualised.
+#### Figure 10: Importance of variables of random forest model.
 
 ```{r fig10, echo=FALSE}
 # Extract variable importance data
@@ -814,23 +814,23 @@ The decision tree model demonstrates a level of efficacy; however, it doesn't fu
 
 In comparing the decision tree and random forest models, several key points emerge that offer insights into their relative strengths and weaknesses in this particular application.
 
-##    Model Complexity and Understanding
+###    Model Complexity and Understanding
 
 The decision tree model has the advantage of being relatively simple to understand and interpret. Each decision within the tree corresponds to a question about one of the variables, making it a model that's easy to visualize and explain. However, this simplicity can also be a limitation as it may not capture complex interactions among variables. This may explain its less-than-satisfactory performance on certain metrics, like sensitivity and specificity across various classes, and overall accuracy.
 
 On the other hand, the random forest model, which operates by creating a multitude of decision trees and aggregating their results, is capable of capturing more complex patterns and interactions in the data. However, the trade-off is that it's more challenging to interpret, as it essentially involves a multitude of decision processes rather than just one.
 
-##    Performance
+###    Performance
 
 The decision tree model's overall performance was modest at best, especially when compared to the random forest models. Both random forest models demonstrated significantly better performance in terms of overall accuracy and class-specific metrics such as sensitivity and specificity. It is worth noting, however, that even the random forest models had substantial differences in performance, likely due to the different variables included in each model and the number of variables tried at each split.
 
 The decision tree's performance was notably weak when trying to predict certain classes ('Low Mid' and 'High Mid'), indicating that it struggled with differentiating among these classes. This suggests that a single decision tree might not have enough flexibility to capture the nuances of this particular dataset.
 
-##    Robustness
+###    Robustness
 
 Random forest models are known to be less prone to overfitting compared to decision tree models. This is because they average the results of many different trees, each of which is trained on a slightly different subset of the data. This difference in robustness is likely a contributing factor to the better performance of the random forest models on the test data.
 
-##    Computational Complexity
+###    Computational Complexity
 
 From a computational perspective, the decision tree model is less resource-intensive, making it a more suitable choice for datasets with a large number of variables or instances. Random forests, however, can require significant computational resources, especially as the number of trees increases.
 
