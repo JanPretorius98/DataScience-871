@@ -10,10 +10,11 @@ knitr::include_graphics("jan_logo.png")
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+# This is an example
 ```
 
 # Preface
-Vibes
+
 ### Project Goal: Threefold: (1) Transformation and cleaning of data. (2) Exploratory Data Analysis of Dating Site Data. (3) Machine Learning modelling.
 
 ### Create Themes and Load Data:
