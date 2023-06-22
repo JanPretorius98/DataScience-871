@@ -23,7 +23,7 @@ options(scipen = 999)
 pacman::p_load(dplyr, ggplot2, tidyverse, rsample, caret, glmnet, vip, pdp, stringr, 
                tidytext, emoji, stopwords, ggridges, wordcloud2, ggmap, readxl, maps,
                viridis, eurostat, corrplot, GGally, reshape2, grid, rpart, rpart.plot, 
-               randomForest, gt, knitr, kableExtra, cowplot)
+               randomForest, gt, knitr, kableExtra, cowplot, textdata)
 
 # Define plot themes and palettes
 palette <- c("#1beaa7", "#00d9d3", "#00c2ff", "#00a5ff", "#007bff", "#8c2aef")
@@ -150,6 +150,7 @@ df <- df %>%
   mutate(has_emoji = ifelse(emoji_detect(whazzup), 1, 0),
          whazzup = str_remove_all(whazzup, "[[:digit:]]+"))
 
+
 # Get the most used words in profile
 # First, create a table of words with the corresponding counts_profileVisits
 words_visits <- df %>%
@@ -195,6 +196,7 @@ words <- words %>%
 
 ```{r fig1, echo=FALSE, fig.align="center"}
 # Create Word Cloud
+set.seed(123)
 wordcloud2(words, size=1.6, color='random-light', backgroundColor = "#000123")
 ```
 
@@ -273,9 +275,9 @@ df %>%
 
 ## Biography characteristics and popularity
 
-Figure 3 below aims to present whether there is a difference in the distribution of likes received based on the newly created dummy variables, `has_emoji`, `contains_popular_word`, and `night_owl`. There seem to be some slight differences in likes received, supporting the idea that the use of emojis and certain words do suggest higher levels of trust. Being online during night time also may increase profile views, but I view this variable more as a control variable, rather than a causal one, as more people tend to be online during night time than in day time.
+Figure 3 below aims to present whether there is a difference in the distribution of likes received based on the newly created dummy variables, `has_emoji`, `contains_popular_word`, and `night_owl`. There seem to be some slight differences in likes received, supporting the idea that the use of emojis and certain words do suggest higher levels of trust. Interestingly, being online seems to be negatively associated with profile views as is shown in the right panel of figure 3. However, being online during night time also may increase profile views, but I view this variable more as a control variable, rather than a causal one, as more people tend to be online during night time than in day time.
 
-#### Figure 3: Violin plots showing effects of profile characteristics on popularity. Left panel: effect of a bio containing social media particulars and/or an emoji on likes received. Right panel: effect of an online profile and/or being a night owl on number of profile visits.
+#### Figure 3: Violin plots showing effects of profile characteristics on popularity. Left panel shows effect of a bio containing social media particulars and/or an emoji on likes received. Right panel shows effect of an online profile and/or being a night owl on number of profile visits.
 
 ```{r fig3, echo=FALSE, fig.align="center", fig.height= 10, fig.width=7, warning=FALSE}
 plot1 <- df %>%
@@ -339,9 +341,11 @@ plot2
 ```
 :::
 
-Word complexity: Using bio length as a measure of complexity.
+In terms of the structure of an individual's bio, I have utilized bio length as a proxy for word complexity, with the hypothesis that longer bios may reflect a higher degree of linguistic complexity. The underlying assumption is that users who write longer bios may use a wider range of vocabulary and complex sentence structures, reflecting their capacity to express intricate thoughts or feelings. However, it's important to note that length does not necessarily equate to complexity — short bios can also be highly nuanced and complex while long bios might be repetitive or simplistic. Hence, although bio length provides a starting point for analysis, more sophisticated measures of textual complexity could be desirable for a more comprehensive understanding.
 
-####    Figure x: Distribution of bio lengths.
+The scatterplot in the right panel of figure 4 suggests there is no clear linear relationship between the standardized complexity of bios and the count of kisses received, indicating that a more complex bio does not necessarily attract more interactions. Although the presence of emojis differentiates two clusters, it doesn't appear to be a strong influence on the count of likes either. This analysis challenges initial assumptions about what factors might drive interaction. However, it's possible that other variables not considered here, such as user activity level or profile picture, could be more impactful. While the plot offers initial insights, it also points towards the need for a more comprehensive exploration of factors influencing user interaction.
+
+####    Figure 4: Visualisation of bio complexity. Left panel shows distribution of length of bio. Right panel shows a scatter plot between bio length and number of likes received; a linear model was fitted to scrutinise any possible relationship between the variables.
 ```{r fig.align="center", message=FALSE}
 # Replace NA values with an empty string
 df$whazzup[is.na(df$whazzup)] <- ""
@@ -352,7 +356,7 @@ df <- df %>%
 
 # Density plot of bio lengths
 densplot <- ggplot(df, aes(x=bio_length)) +
-  geom_density(fill="#1beaa7", alpha=0.8) +
+  geom_density(fill="#1beaa7", alpha=0.8, color = "white") +
   labs(x = "Bio Length", y = "Density") +
   th
 ```
@@ -364,12 +368,12 @@ scatplot <- df %>%
   mutate(bio_lengthStd = scale(bio_length)) %>%
   filter(bio_lengthStd > 0, counts_kissesStd > 0) %>% 
   ggplot(aes(x=bio_lengthStd, y=counts_kissesStd)) +
-    geom_point(alpha=0.5, color="#00c2ff") +
-    geom_smooth(method = "lm", color = "#1beaa7", se = FALSE) +
+    scale_fill_manual(values = c("#1beaa7", "#8c2aef")) +
+    geom_point(aes(fill = factor(has_emoji)), pch = 21, alpha = 0.8, colour = "white", show.legend = FALSE) +
     labs(x = "Standardized Bio Length (Complexity)", y = "Standardized Counts of Kisses") +
-    th
-
-
+    th +
+    geom_smooth(aes(colour = factor(has_emoji)), method = "lm", se = FALSE) +
+    scale_colour_manual(values = c("#1beaa7", "#8c2aef"), name = "Has Emoji", labels = c("No Emoji", "Contains Emoji"))
 ```
 
 <div class="row">
@@ -385,22 +389,6 @@ densplot
 scatplot
 ```
 :::
-
-Sentiment analysis
-
-```{r error=TRUE}
-# Sentiment analysis
-df <- df %>%
-  mutate(sentiment = get_sentiment(whazzup))
-
-# Plot sentiment vs. popularity
-ggplot(df, aes(x=sentiment, y=counts_kissesStd)) +
-  geom_point(alpha=0.5, color="#00c2ff") +
-  labs(x = "Sentiment", y = "Profile Kisses Count (Standardised)") +
-  th
-
-```
-
 
 ## Geographical characteristics and popularity
 
@@ -662,8 +650,8 @@ df_summary %>%
   geom_line(size = 1) +
   geom_point() +
   scale_colour_manual(values = c("#1beaa7", "#8c2aef"), 
-                    name = "Has Social Media", 
-                    labels = c("No Social", "Contains Social")) +
+                    name = "Social Media", 
+                    labels = c("No", "Yes")) +
   labs(x = "Pictures Count", 
        y = "Mean Profile Kisses Count", 
        colour = "Contains Social Media") +
@@ -807,7 +795,7 @@ visits_rf <- randomForest(formula = Profile_Views ~ isOnline + night_owl + age +
 visits_rf
 
 # Random Forest model for profile likes
-kisses_rf <- randomForest(formula = Profile_Likes ~ has_emoji + has_social + Profile_Views + counts_pictures + lang_count + flirtInterests_chat + flirtInterests_date + flirtInterests_friends + counts_details,
+kisses_rf <- randomForest(formula = Profile_Likes ~ has_emoji*flirtInterests_chat + has_social*counts_pictures + Profile_Views + lang_count + flirtInterests_date + flirtInterests_friends + counts_details,
                           data = training_kisses,
                           importance = TRUE, 
                           ntree = 500)

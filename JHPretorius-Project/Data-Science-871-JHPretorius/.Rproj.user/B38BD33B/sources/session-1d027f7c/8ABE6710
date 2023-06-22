@@ -3,7 +3,7 @@
     "path": "~/Library/CloudStorage/OneDrive-StellenboschUniversity/Masters-2023/Modules/Data Science/DataScience-871-repo/JHPretorius-Project/Data-Science-871-JHPretorius/EDA.Rmd",
     "project_path": "EDA.Rmd",
     "type": "r_markdown",
-    "hash": "3656891059",
+    "hash": "0",
     "contents": "",
     "dirty": false,
     "created": 1687199778565.0,
@@ -13,8 +13,8 @@
         "tempName": "Untitled1",
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "431,158",
-        "scrollLine": "418",
+        "cursorPosition": "703,0",
+        "scrollLine": "699",
         "rmdVisualMode": "false",
         "rmdVisualWrapConfigured": "true",
         "docOutlineVisible": "0",
@@ -24,11 +24,11 @@
         "docOutlineSize": "171"
     },
     "folds": "",
-    "lastKnownWriteTime": 1687447442,
+    "lastKnownWriteTime": 1687452219,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1687447442524,
+    "last_content_update": 1687452452002,
     "read_only": false,
     "read_only_alternatives": []
 }

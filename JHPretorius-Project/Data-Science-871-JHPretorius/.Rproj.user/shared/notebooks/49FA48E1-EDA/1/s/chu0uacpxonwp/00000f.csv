@@ -8,6 +8,7 @@
 "0","  mutate(has_emoji = ifelse(emoji_detect(whazzup), 1, 0),"
 "0","         whazzup = str_remove_all(whazzup, ""[[:digit:]]+""))"
 "0",""
+"0",""
 "0","# Get the most used words in profile"
 "0","# First, create a table of words with the corresponding counts_profileVisits"
 "0","words_visits <- df %>%"
