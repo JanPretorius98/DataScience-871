@@ -1,0 +1,26 @@
+"0","# Create a data frame"
+"0","data <- data.frame("
+"0","  Variable = c(""genderLooking"", ""age"", ""counts_details"", ""counts_pictures"", ""counts_profileVisits"", ""counts_kisses"", ""flirtInterests_*"", ""verified"", ""lang_count"", ""lang_*"", ""whazzup""),"
+"0","  Description = c(""Preferred gender the subject is looking to engage with. Represented as 'M' for male, 'F' for female, 'both' for male and female, or 'none'."","
+"0","                  ""Age of the individual."","
+"0","                  ""How complete the profile is. Proportion of detail in the account. Measured from 0.0-1.0."","
+"0","                  ""How many pictures does the profile contain."","
+"0","                  ""How many times the profile has been viewed."","
+"0","                  ""Number of 'kisses' or 'likes' received by profile."","
+"0","                  ""What the individual is interested in. '*' represents: 'chat', 'date', 'friends'."","
+"0","                  ""Whether the profile has been verified or not."","
+"0","                  ""Number of languages spoken by an individual."","
+"0","                  ""Language spoken by an individual. '*' represents: 'en' (English), 'de' (German), 'fr' (French), 'it' (Italian), 'es' (Spanish)."","
+"0","                  ""A phrase that represents the profile's 'bio'."")"
+"0",") %>% tibble::as_tibble()"
+"2","Error in exists(cacheKey, where = .rs.WorkingDataEnv, inherits = FALSE) : 
+  invalid first argument
+"
+"2","Error in assign(cacheKey, frame, .rs.CachedDataEnv) : 
+  attempt to use zero-length variable name
+"
+"0","table <- kable(data, ""html"", booktabs = TRUE, longtable = FALSE, linesep = """", caption = """") %>%"
+"0","  kable_styling(font_size = 10) "
+"0",""
+"0","# Print the table"
+"0","print(table)"

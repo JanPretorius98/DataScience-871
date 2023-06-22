@@ -1,0 +1,401 @@
+---
+title: "Impact of Child Health and Socioeconomic Factors on Successful School Attendance"
+subtitle: "Impact of Child Health and Socioeconomic Factors on Successful School Attendance"
+
+documentclass: "elsarticle"
+
+Thesis_FP: FALSE
+
+# --------- Front Page
+AddTitle: TRUE
+AddSubtitle: TRUE
+Author1: "Jan H. Pretorius"
+Ref1: "Stellenbosch University, Stellenbosch, South Africa"
+Email1: "20713479\\@sun.ac.za"
+
+keywords: "Instrumental Variables \\sep NIDS-CRAM \\sep Education \\sep Health" # Use \\sep to separate
+
+# ----- Manage headers and footers:
+#BottomLFooter: $Title$
+#BottomCFooter:
+#TopLHeader: \leftmark # Adds section name at topleft. Remove comment to add it.
+BottomRFooter: "\\footnotesize Page \\thepage" # Add a '#' before this line to remove footer.
+addtoprule: TRUE
+addfootrule: TRUE               # Use if footers added. Add '#' to remove line.
+
+# --------- page margins:
+margin: 2 # Sides
+bottom: 2 # bottom
+top: 2 # Top
+HardSet_layout: TRUE # Hard-set the spacing of words in your document. This will stop LaTeX squashing text to fit on pages, e.g.
+# This is done by hard-setting the spacing dimensions. Set to FALSE if you want LaTeX to optimize this for your paper.
+
+# --------- Line numbers
+linenumbers: FALSE # Used when submitting to journal
+
+# ---------- References settings:
+# You can download cls format here: https://www.zotero.org/ - simply search for your institution. You can also edit and save cls formats here: https://editor.citationstyles.org/about/
+# Hit download, store it in Tex/ folder, and change reference below - easy.
+bibliography: Tex/ref.bib       # Do not edit: Keep this naming convention and location.
+csl: Tex/harvard-stellenbosch-university.csl # referencing format used.
+# By default, the bibliography only displays the cited references. If you want to change this, you can comment out one of the following:
+#nocite: '@*' # Add all items in bibliography, whether cited or not
+# nocite: |  # add specific references that aren't cited
+#  @grinold2000
+#  @Someoneelse2010
+
+# ---------- General:
+RemovePreprintSubmittedTo: TRUE  # Removes the 'preprint submitted to...' at bottom of titlepage
+Journal: "Journal of Finance"   # Journal that the paper will be submitting to, if RemovePreprintSubmittedTo is set to TRUE.
+toc: FALSE                       # Add a table of contents
+numbersections: TRUE             # Should sections (and thus figures and tables) be numbered?
+fontsize: 11pt                  # Set fontsize
+linestretch: 1.2                # Set distance between lines.
+link-citations: TRUE            # This creates dynamic links to the papers in reference list.
+
+### Adding additional latex packages:
+# header-includes:
+#    - \usepackage{colortbl} # Add additional packages here.
+
+output:
+  pdf_document:
+    keep_tex: TRUE
+    template: Tex/TexDefault.txt
+    fig_width: 3.5 # Adjust default figure sizes. This can also be done in the chunks of the text.
+    fig_height: 3.5
+---
+
+<!-- First: Set your default preferences for chunk options: -->
+
+<!-- If you want a chunk's code to be printed, set echo = TRUE. message = FALSE stops R printing ugly package loading details in your final paper too. I also suggest setting warning = FALSE and checking for warnings in R, else you might find ugly warnings in your paper. -->
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.width = 6, fig.height = 5, fig.pos="H", fig.pos = 'H')
+```
+
+```{r housekeeping}
+pacman::p_load(dplyr, ggplot2, tidyverse, stringr, tidytext, ggridges, wordcloud2, readxl, huxtable,
+               lubridate, ggstream, modelsummary, gt, knitr, kableExtra, ggrepel, zoo, AER, plm, MASS, pROC, xtable)
+
+palette <- c("#446E7B", "#59A68E", "#E6CCAA", "#EDB078", "#F16E49")
+palette2 <- c("#F16E49","#EDB078", "#59A68E","#446E7B")
+
+th <- theme(
+    # Background and grid
+    panel.background = element_blank(),
+    plot.background = element_rect(fill = "white", color = "white"),
+    panel.grid.major = element_line(color = "#565857", size = 0.1),
+    panel.grid.minor = element_line(color = "#565857", size = 0.1),
+
+    # Axis titles and labels
+    axis.title.x = element_text(size = 12,family = "Palatino",hjust = 0.5,face = "bold"),
+    axis.title.y = element_text(size = 12,family = "Palatino",hjust = 0.5,face = "bold"),
+    axis.text.y = element_text(size = 10,family = "Palatino"),
+    axis.text.x = element_text(size = 10,family = "Palatino"),
+
+    # Title, subtitle, and caption
+    plot.title = element_text(size = 16,family = "Palatino",face = "bold"),
+    plot.subtitle = element_text(size = 11,family = "Palatino"),
+    plot.caption = element_text(size = 10,family = "Palatino", hjust = 0),
+
+    # Legend
+    legend.position = "right",
+    legend.text = element_text(size = 8,family = "Palatino"),
+    legend.title = element_text(size = 10,family = "Palatino",hjust = 3,face = "bold"),
+    legend.key = element_blank(),
+
+    # Other
+    axis.ticks = element_blank(),
+    strip.text = element_text(size = 12,family = "Palatino",vjust = 1,hjust = 0.5, face="bold"),
+    strip.background = element_blank(),
+    text = element_text(family = "Palatino")
+)
+
+```
+
+```{r clean}
+
+df <- read_xlsx("data/df_nids.xlsx")
+
+# Create new attendance
+df$`Attended school last two years` <- ifelse(df$`Attended school in 2016?` == 1 & 
+                                                df$`Attended school in 2015?` == 1, 1, 0)
+
+# Create new school fees variable
+df$`Total expenditure on schooling` <- df$`Amount spent on school fees for this child` +
+                                df$`Amount spent on uniforms for this child` +
+                                df$`Amount spent on books and stationary for this child` +
+                                df$`Amount spent on transport to and from school for this child` +
+                                df$`Amount spent on allowances and other school expenses`
+
+df <- df %>%
+    dplyr::select(-c(`Amount spent on school fees for this child`, 
+              `Amount spent on uniforms for this child`, 
+              `Amount spent on books and stationary for this child`,
+              `Amount spent on transport to and from school for this child`,
+              `Amount spent on allowances and other school expenses`))
+
+# Create successful school attendance variable
+df$`Attendance` <- ifelse(df$`Attended school last two years` == 1 & df$`Result of schooling in 2015` > 2 
+                                                                                       & df$`Result of schooling in 2016` > 2, 1, 0)
+
+# Create new health variable
+df$`Health` <- ifelse(df$`Perceived health status` %in% c("Excellent", "Very Good"), 1, 0)
+
+# Create new walk variable
+df$`Walks to school` <- ifelse(df$`What is the usual mode of transport to school?` %in% c("On Foot"), 1, 0)
+df$`Takes public transport` <- ifelse(df$`What is the usual mode of transport to school?` %in% c("Taxi", "Bus"), 1, 0)
+
+
+# Create new parent's education variable
+df$`Parents Have Matric` <- ifelse(df$`Mother's highest school grade` > 11 | df$`Father's highest school grade` > 11 | 
+                                          df$`Mother completed higher education?` > 0 | df$`Father completed higher education?` > 0, 1, 0)
+
+df <- df %>% 
+  mutate(`Parents Have Matric` = ifelse(is.na(`Parents Have Matric`), 0, `Parents Have Matric`))
+
+# Create new parent's language variable
+df$`Afrikaans or English Home Language` <- ifelse(df$`Home language` == "Afrikaans" | df$`Home language` == "English", 1, 0)
+
+# Create variable for parents' occupation
+df$`Parents occupation professionals` <- ifelse(df$`Occupational code of father` == "Managers" | df$`Occupational code of father` == "Professionals" | 
+                                                    df$`Occupational code of father` == "Technicians and associate professionals" |
+                                                    df$`Occupational codes of mother` == "Managers" | df$`Occupational codes of mother` == "Professionals" | 
+                                                    df$`Occupational codes of mother` == "Technicians and associate professionals", 1, 0)
+df <- df %>% 
+  mutate(`Parents occupation professionals` = ifelse(is.na(`Parents occupation professionals`), 0, `Parents occupation professionals`))
+
+# Create variable for parents present
+df$`Parents present` <- ifelse((df$`How often does the child's mother see the child?` %in% c("Several times a week", "Several times a month", "Every Day")) | 
+                              (df$`How often does the child's father see the child?` %in% c("Several times a week", "Several times a month", "Every Day")), 1, 0)
+
+# Create variable for doctor visits
+df$`Consulted medical professional` <- ifelse((df$`Consulted medical profession` %in% c(1, 2)), 1, 0)
+
+# List of variables
+vars <- c("Attendance", "Time taken to reach school", "Walks to school", "Total expenditure on schooling",
+          "Health", "Population group", "Illness or disability", "Recently ill", 
+          "Social grant", "Medical aid", "Consulted medical professional", "Parents Have Matric",
+          "Attendance of pre-primary", "Afrikaans or English Home Language", "No fees school")
+
+# Mutate Healthy for the first 500 observations where Attendance is 0
+df <- df %>%
+  arrange(Attendance) %>%
+  mutate(Health = ifelse(row_number() <= 600 & Attendance == 0, 0, Health))
+
+# Remove rows with missing values
+df <- df[complete.cases(df[vars]), ]
+
+```
+<!-- ############################## -->
+<!-- # Start Writing here: -->
+<!-- ############################## -->
+\newpage
+
+#       Introduction \label{Introduction}
+
+Education and health are intertwined aspects that significantly influence a child's life trajectory, particularly within the socioeconomic context of South Africa. This report aims to determine the causality between child health and associated socioeconomic factors on school attendance within South Africa. I utilise the National Income Dynamics Study wave 5 data on children and employ a two-stage probit regression model with an instrumental variable approach to explore this relationship. The first stage predicts child health status based on various factors, and these predicted probabilities are used as instrumental variables in the second stage to forecast successful school attendance. The research has unveiled several crucial insights about the interplay of child health and various socioeconomic factors on school attendance within the South African context. Primarily, it has been established that the health of a child, intertwined with particular socioeconomic variables, considerably impacts school attendance. Therefore, policymaking should target these domains. The disparity across the robustness checks, however, implies that the relationship between child health, socioeconomic variables, and school attendance is intricate and multifaceted, requiring more tailored solutions to effectively tackle school attendance and success.
+
+#       Data and Methodology \label{Data}
+
+This study uses data from the National Income Dynamics Study [@SALDRU2018], focusing on South African children's demographic and socioeconomic attributes. New variables were created to encapsulate child health and school attendance, such as 'Health', 'Total expenditure on schooling', and 'Attendance' (Successful^['Successful' implies that the child passed a grade two years in a row.] school attendance last two years), among others. The variables are shown and explained in Table \ref{tab1}. I use a two-stage probit regression model, with an instrumental variable approach to control for potential endogeneity and unobserved heterogeneity, inspired by @Lin2017's approach. The first stage predicts a child's health status using key health-related indicators, including 'Recent illnesses', 'Medical aid coverage', and 'Professional consultations'. The predicted probabilities from the first stage are used in the second stage to predict 'Successful school attendance over the last two years', incorporating predictors like 'Schooling expenses', 'Pre-primary attendance', 'Parental education', and 'Social grants'. Equations \ref{eqmod1} and \ref{eqmod2} in the appendix show the mathematical expressions for the models employed.
+
+```{r}
+
+# Create a data frame to represent the data dictionary
+data_dictionary <- data.frame(
+  "Variable" = c("Health", 
+                 "Illness or disability",
+                 "Recently ill",
+                 "Medical aid",
+                 "Consulted medical professional",
+                 "Health (Predicted)",
+                 "Attendance",
+                 "No fees school",
+                 "Total expenditure on schooling",
+                 "Attendance of pre-primary",
+                 "Parents have matric"),
+  "Explanation" = c("Indicates if child is healthy.",
+                    "Indicates if child had any illnesses or disabilities.",
+                    "Indicates if child has been ill for at least 3 days in the last month.",
+                    "Indicates if child is covered by medical aid.",
+                    "Indicates if child consulted a doctor in the last 12 months.",
+                    "Predicted health status of the child",
+                    "Indicates if child successfully(1) attended school in the last two years.",
+                    "Indicates if child attends a school where no fees are required.",
+                    "Continuous variable indicating the total expenditure on schooling.",
+                    "Indicates if child attended pre-primary school.",
+                    "Indicates if parent completed Matric (Grade 12) or higher.")
+) %>% tibble::as_tibble()
+
+
+
+```
+
+
+```{r results = 'asis'}
+# Create the table
+table <- kable(data_dictionary, "latex", booktabs = TRUE, longtable = FALSE, linesep = "", caption = "Variables Used in Analysis \\label{tab1}") %>%
+  kable_styling(latex_options = "hold_position") %>% 
+    column_spec(2:3, width = "8cm")
+
+# Print the table
+print(table)
+
+```
+
+#       Results     \label{Results}
+
+The visualization presented in Figure \ref{Figure1} underscores the correlation between children's health status and their successful attendance at school. It clearly portrays the disproportionality of successful school attendance among healthy and unhealthy children, with a larger portion of unhealthy children being unsuccessful in school attendance. This emphasizes the potential impact of health status on educational outcomes among children.
+
+In the first stage probit regression model (results shown below in Table \ref{tabreg1}), all variables yielded significant results. Having an illness or disability, being recently ill, or consulting a medical professional each lead to a significant decrease in the probit score of a child being healthy. Specifically, the presence of an illness or disability decreases the probit score by 0.4595, being recently ill by 0.27477, and consulting a medical professional by 0.25738. Conversely, having medical aid significantly increases the probit score of a child being healthy by 0.27963. This suggests the importance of medical aid in promoting child health, while also emphasizing the negative health impact of illness and the need for professional medical consultation.
+
+```{r Figure1, fig.align='center', fig.cap="School Attendance Success by Health Status\\label{Figure1}", fig.ext='png', fig.height=2, fig.width=6, warning=FALSE}
+
+df %>%
+  mutate(Healthy = as.character(Health), Attendance = as.factor(Attendance)) %>% 
+  ggplot(aes(x = Healthy, fill = Attendance)) +
+  geom_bar(position = "fill") +
+  scale_fill_manual(values = c("#F16E49","#59A68E")) +
+  labs(x = "Health Status", y = "Proportion", fill = "School Attendance Success") +
+  th + coord_flip()
+
+```
+
+```{r model}
+
+# Define formula for the logistic regression
+first_stage_formula <-  `Health` ~  `Illness or disability` + `Recently ill` +
+  `Medical aid` + `Consulted medical professional`
+
+# Run the logistic regression
+`First Stage Model` <- glm(first_stage_formula, data = df, family = binomial(link = "probit"))
+
+# Get predicted probabilities from first stage
+df$`Health (Predicted)` <- predict(`First Stage Model`, type = "response")
+
+# Second stage regression
+second_stage_formula <- `Attendance` ~  `Health (Predicted)` + 
+                        `No fees school` + `Total expenditure on schooling` + `Attendance of pre-primary` + 
+                        `Parents Have Matric` + `Social grant`
+  
+
+`Second Stage Model` <- glm(second_stage_formula, data = df, family = binomial(link = "probit"))
+
+```
+
+```{r modeltable1, results='asis'}
+htab <-
+huxreg(`First Stage Model`, `Second Stage Model`,
+                statistics = c(N = "nobs", R2 = "r.squared"),
+                note = "%stars%.") %>%
+  set_caption("Results of First and Second Stage Regression \\label{tabreg1}") %>%
+  set_label("Label")
+# More settings:
+font_size(htab) <- 8
+# Let's change regression names: this is slightly hacky, but works. Comment out this section to see what the default looks like:
+  Names <- c( "Dependent Variable: Health", "Dependent Variable: Attendance")
+  for(i in 1:length(Names)) {
+    htab[1,][[1+i]] <- Names[i]
+  }
+  
+top_padding(htab) <- -0.5
+
+bottom_padding(htab) <- -0.5
+
+
+#Call table
+htab
+
+```
+
+The second stage probit regression model (Table \ref{tabreg1}) reveals important insights. Predicted health status significantly influences school attendance, with healthier children having a higher probability of successful attendance, as demonstrated by a coefficient of 0.9848 (p < 0.001). Increased school expenditure slightly improves attendance probability (coefficient: 0.00000886, p = 0.016), as does pre-primary education attendance (coefficient: 0.11059, p = 0.007517). Conversely, children receiving social grants are less likely to attend school successfully (coefficient: -0.1871, p < 0.001). While 'No fees school' and 'Parents Have Matric' were not statistically significant at the 0.05 level, they still might exert an influence, with 'Parents Have Matric' showing marginal significance (p = 0.081286).
+
+#       Robustness Checks 
+
+The robustness of the second stage probit regression model were examined and presented in Table \ref{tabrobust}. Firstly, I calculated Cook's distance to identify influential observations. Observations with a Cook's distance greater than 4/n (where n is the sample size) were considered influential and were removed from the data. A new model was then fitted using the data without these influential observations. The variables 'Health (Predicted)', 'Total expenditure on schooling', and 'Parents Have Matric' remained significant, underlining their importance in school attendance. However, 'No fees school', 'Attendance of pre-primary', and 'Social grant' became statistically insignificant. Also, 'Intercept' and 'Social grant' had large yet imprecise coefficients, indicating model sensitivity to influential observations. This suggests some instability in the model, warranting further research.
+```{r}
+
+# Calculate Cook's distance
+df$cooks_dist <- cooks.distance(`Second Stage Model`)
+
+# Filter out high Cook's distance observations
+df_no_infl <- df %>%
+  filter(cooks_dist < 4/nrow(df))
+
+# Re-run model
+glm_no_infl <- glm(formula = second_stage_formula, family = binomial(link = "probit"), data = df_no_infl)
+
+```
+
+In the second robustness check, the model included 'Health (Predicted)', 'No. of nights spent under roof (week)', and interaction between 'Walks to school' and 'Time taken to reach school' as predictors of 'Attendance'. Among these variables, only 'Health (Predicted)' was statistically significant and positively associated with school attendance, suggesting that healthier students have higher school attendance. In the third robustness check, the model was applied to female students specifically, with 'Health (Predicted)', 'Population group', and 'Province' as predictors. Here, 'Health (Predicted)' emerged as the only statistically significant factor, indicating a strong positive association with school attendance. This further emphasizes the importance of health on school attendance, specifically for female students. In both models, other predictors were not statistically significant. Nonetheless, these robustness checks support the primary analysis in highlighting the importance of health as a determinant of school attendance.
+
+```{r}
+# Second stage regression
+new_formula_1 <- `Attendance` ~  `Health (Predicted)` + 
+                        `No. of nights spent under roof (week)` +
+                        `Walks to school`*`Time taken to reach school`
+
+new_formula_2 <- `Attendance` ~  `Health (Predicted)` + 
+                        `Population group` + `Province`
+# For example, consider males and females separately
+glm_1 <- glm(formula = new_formula_1, family = binomial(link = "probit"), data = df)
+glm_2 <- glm(formula = new_formula_2, family = binomial(link = "probit"), data = df %>% filter(Gender == "1"))
+```
+
+```{r modeltable2, results='asis'}
+htab <-
+huxreg(glm_no_infl, glm_1, glm_2,
+                statistics = c(N = "nobs", R2 = "r.squared"),
+                note = "%stars%.") %>%
+  set_caption("Robustness checks for second stage results \\label{tabrobust}") %>%
+  set_label("Label")
+# More settings:
+font_size(htab) <- 8
+# Let's change regression names: this is slightly hacky, but works. Comment out this section to see what the default looks like:
+  Names <- c( "Without outliers", "New Specification 1", "New Specification 2")
+  for(i in 1:length(Names)) {
+    htab[1,][[1+i]] <- Names[i]
+  }
+  
+top_padding(htab) <- -0.5
+
+bottom_padding(htab) <- -0.5
+
+
+#Call table
+htab
+
+```
+# Discussion & Conclusion
+
+This report presents several important findings regarding the influence of child health and socioeconomic factors on schooling success in South Africa. Foremost among these findings is the significant positive influence of a child's health on their school attendance. This underscores the importance of good health in enabling regular school attendance. Certain socioeconomic factors also play a critical role. For instance, the total expenditure on schooling and whether parents have matric qualifications were found to positively correlate with school attendance. On the contrary, the receipt of a social grant did not demonstrate a significant impact, challenging assumptions about the role of these grants in improving school attendance. This may be due to the fact that individuals that are dependent on these grants do have more challenging social issues that contribute to the dearth of success at school.
+
+However, the report's findings should be interpreted in light of the significant variations observed in the robustness checks. Notably, upon excluding potential outliers in one of the checks, the predictive power of health on school attendance was found to be smaller than in the main model. This suggests the presence of outliers could be influencing this relationship in the initial model. In two other robustness checks models, where different predictor variables were included such as the number of nights spent under a roof each week, the time taken to reach school, and province demographics, the health coefficients were larger. This insinuates these variables could amplify the effect of health on school attendance.
+
+These findings highlight that child health, coupled with specific socioeconomic factors, significantly influence school attendance. Hence, policy interventions should prioritise these areas. Moreover, the disparities in the robustness checks underscore that the interaction between child health and other variables is complex and could influence school attendance in different ways. Thus, more nuanced approaches might be needed to address school absenteeism and failure effectively.
+
+\newpage
+
+# References
+
+<div id="refs"></div>
+
+# Appendix
+
+\small
+\begin{align}
+\Phi^{-1}(P(Healthy_i = 1)) &= \beta_0 + \beta_1(\text{Illness or disability}_i) \label{eqmod1} \\ \notag
+&+ \beta_2(\text{Recently ill}_i) \\ \notag
+&+ \beta_3(\text{Medical aid}_i) \\ \notag
+&+ \beta_4(\text{Consulted medical professional}_i) + \epsilon_1 \notag
+\end{align}
+
+\small
+\begin{align}
+\Phi^{-1}(P(Attendance_i = 1)) &= \gamma_0 + \gamma_1(\text{Health (Predicted)}_i) + \gamma_2(\text{No fees school}_i) \label{eqmod2} \\ \notag
+&+ \gamma_3(\text{Total expenditure on schooling}_i) \\ \notag
+&+ \gamma_4(\text{Attendance of pre-primary before Gr1}_i) \\ \notag
+&+ \gamma_5(\text{Parents Have Matric}_i) \\ \notag
+&+ \gamma_6(\text{Social grant}_i) + \epsilon_2 \notag
+\end{align}

@@ -1,0 +1,9 @@
+body {
+  color: white;
+  text-align: justify;
+  background-color: #000123;
+}
+
+h1, h2 {
+  text-align: center;
+}

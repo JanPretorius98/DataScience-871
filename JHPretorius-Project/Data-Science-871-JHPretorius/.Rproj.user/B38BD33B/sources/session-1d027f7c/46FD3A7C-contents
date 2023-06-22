@@ -1,0 +1,118 @@
+---
+title: "Streaming Success: Unveiling Insights from Netflix Data Analysis"
+author: "JH Pretorius"
+date: "`r Sys.Date()`"
+bibliography: Tex/ref.bib       
+output:
+  pagedown::html_paged:
+    # template: wp_paged.html
+    # css: ['wp.css', 'wp-fonts.css', 'wp-page.css']
+    css: ["Template/default-fonts-Texevier.css", "Template/default-page-Texevier.css", "Template/default-Texevier.css"]
+    csl: Template/harvard-stellenbosch-university.csl # referencing format used.
+    template: ["Template/paged-Texevier.html"]
+
+    toc: false
+    # change to true for a self-contained document, but it'll be a litte slower for Pandoc to render
+    self_contained: TRUE
+---
+
+```{r setup, include=FALSE}
+#   Housekeeping
+setwd("/Users/janhendrikpretorius/Library/CloudStorage/OneDrive-StellenboschUniversity/20713479-DatSci-Prac")
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE)
+    #   Clear environment
+rm(list = ls())
+options(scipen = 999)
+
+    #   Get external code
+source("utilities/aesthetics.R") #  Get plot themes
+source("utilities/convert_numeric.R")  # Convert multiple columns to numeric 
+    #   Load libraries
+pacman::p_load(dplyr, ggplot2, tidyverse, stringr, tidytext, ggridges, wordcloud2, ggmap, readxl, maps,
+               viridis, lubridate, ggstream, modelsummary, gt, knitr, kableExtra, ggrepel, zoo, 
+               rnaturalearth, rnaturalearthdata, sf, lwgeom)
+
+    #   Load Data
+path <- "data/netflix/"
+
+file <- "credits.csv"
+df_credits <- read_csv(paste0(path, file))
+
+file <- "titles.csv"
+df_titles <- read_csv(paste0(path, file))
+
+file <- "Movies.csv"
+df_movies <- read_csv(paste0(path, file))
+```
+
+\newpage
+
+```{r clean_data}
+
+# Extract the first genre from the string
+df_titles$Main_Genre <- str_extract(df_titles$genres, "^[^,]*")
+df_titles$Main_Genre <- gsub("\\[|\\]|'", "", df_titles$Main_Genre)
+
+# Genre distribution
+genre_distribution <- df_titles %>%
+  group_by(Main_Genre) %>%
+  summarise(Count = n()) %>% 
+  filter(Main_Genre != "")
+
+# Calculate average audience score by main genre
+avg_score_genre <- df_movies %>%
+  group_by(Genre) %>%
+  summarise(AvgScore = mean(`Audience  score %`, na.rm = TRUE)) %>%
+  arrange(desc(AvgScore)) %>%
+  head(10)
+
+# Merge credits with movie data
+actor_data <- merge(df_credits, df_movies, by.x = "id", by.y = "Film")
+```
+
+```{r genres}
+
+# Plot genre distribution
+ggplot(genre_distribution, aes(x = reorder(Main_Genre, -Count), y = Count)) +
+  geom_bar(stat = "identity", fill = "#dd5182") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  th +
+  labs(x = "Main Genre", y = "Number of Titles", title = "Netflix Content Distribution by Main Genre")
+
+# Plot average audience score by main genre
+ggplot(avg_score_genre, aes(x = reorder(Genre, -AvgScore), y = AvgScore)) +
+  geom_bar(stat = "identity", fill = "#dd5182") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  th +
+  labs(x = "Main Genre", y = "Average Audience Score", title = "Average Audience Score by Main Genre")
+
+```
+```{r profitability}
+
+# Calculate average worldwide gross and average audience score by main genre
+avg_data_genre <- df_movies %>%
+  group_by(Genre) %>%
+  summarise(
+    `Avg Worldwide Gross` = mean(`Worldwide Gross`, na.rm = TRUE),
+    `Avg Profitability` = mean(`Profitability`, na.rm = TRUE)
+  ) %>%
+  arrange(desc(`Avg Worldwide Gross`))
+
+# Create the gt table
+avg_data_genre %>%
+  gt() %>%
+  tab_header(
+    title = "Average Worldwide Gross and Audience Score by Genre"
+  ) %>%
+  cols_label(
+    Genre = "Main Genre",
+    `Avg Worldwide Gross` = "Average Worldwide Gross",
+    `Avg Profitability` = "Average Profitability"
+  )
+```
+
+Based on the data, it is evident that drama and comedy films dominate the Netflix library, while animation and fantasy titles are relatively low in number. However, it is important to note that fantasy, animation, and drama genres receive high audience scores on IMDb, indicating strong viewer satisfaction.
+
+Considering these findings, Netflix should consider expanding its content offerings in the fantasy and animation genres to cater to the audience's preferences and capitalize on their popularity. By diversifying its library with more fantasy and animation titles, Netflix can attract a larger audience and potentially increase viewer engagement. Additionally, continuing to invest in drama and comedy films, which are already popular genres, can help maintain the existing viewer base.
+
+Overall, a strategic approach for Netflix would involve balancing its content portfolio by increasing the availability of fantasy and animation titles while continuing to deliver compelling drama and comedy films to meet the preferences of a wide range of viewers.
