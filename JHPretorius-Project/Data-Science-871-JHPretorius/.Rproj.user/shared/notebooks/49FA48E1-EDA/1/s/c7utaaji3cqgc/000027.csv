@@ -1,3 +1,0 @@
-"0",""
-"0","# Visualize the decision trees"
-"0","rpart.plot(visits_tree, extra = 1)"

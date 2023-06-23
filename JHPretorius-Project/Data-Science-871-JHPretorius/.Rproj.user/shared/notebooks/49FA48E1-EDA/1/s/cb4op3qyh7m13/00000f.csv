@@ -1,0 +1,24 @@
+"0","# Create the table"
+"2","Error in exists(cacheKey, where = .rs.WorkingDataEnv, inherits = FALSE) : 
+  invalid first argument
+"
+"0","data <- df[1:5,] %>% tibble::as_tibble()"
+"2","Error in exists(cacheKey, where = .rs.WorkingDataEnv, inherits = FALSE) : 
+  invalid first argument
+"
+"2","Error in assign(cacheKey, frame, .rs.CachedDataEnv) : 
+  attempt to use zero-length variable name
+"
+"0","data <- data %>% "
+"0","  select(c(""age"", ""counts_details"", ""counts_pictures"", ""counts_profileVisits"", ""counts_kisses"", ""counts_g"",""flirtInterests_chat"", ""verified"", ""lang_count"", ""lang_de"", ""whazzup"", ""freetext""))"
+"2","Error in exists(cacheKey, where = .rs.WorkingDataEnv, inherits = FALSE) : 
+  invalid first argument
+"
+"2","Error in assign(cacheKey, frame, .rs.CachedDataEnv) : 
+  attempt to use zero-length variable name
+"
+"0","table <- kable(data, ""html"", booktabs = TRUE, longtable = FALSE, linesep = """", caption = """") %>%"
+"0","  kable_styling(font_size = 10) "
+"0",""
+"0","# Print the table"
+"0","print(table)"

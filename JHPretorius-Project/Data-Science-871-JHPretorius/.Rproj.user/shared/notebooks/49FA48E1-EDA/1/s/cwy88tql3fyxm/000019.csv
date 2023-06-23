@@ -1,0 +1,3 @@
+"0","# Create Word Cloud"
+"0","set.seed(123)"
+"0","wordcloud2(words, size=1.6, color='random-light', backgroundColor = ""#000123"")"

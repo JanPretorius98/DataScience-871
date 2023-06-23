@@ -1,3 +1,4 @@
+"0","df <- df[complete.cases(df[,c('isOnline', 'night_owl', 'age', 'genderLooking', 'verified', 'isMobile')]), ]"
 "0",""
 "0","# Set seed for reproducibility"
 "0","set.seed(777)"
