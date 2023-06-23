@@ -83,11 +83,11 @@ The underlying motivation for this study stems from the desire to comprehend beh
 
 The initial phase of the analysis involves the transformation of raw data into a more interpretable format. This includes the creation of additional variables tailored to augment the predictive capacity of the statistical models employed in subsequent stages. This phase facilitates the exploratory aspect of the research, enabling an in-depth examination of data in search of potential predictor variables. The objective extends beyond understanding the phenomena; the aim is to anticipate which factors instigate an increased number of profile views and, subsequently, the 'likes' received.
 
-The modelling process is a two-step approach. The first stage focuses on identifying variables that may elucidate why individuals view a certain profile. Potential variables include online presence, age, geographical location, and the timing of an individual's online activity. The second stage aims to identify factors that influence the likelihood of a profile receiving 'likes'. These may include the number of pictures on a profile, the characteristics of a profile's biography, languages spoken, profile verification status, and mobile usage.
+The modelling process is a two-step approach. The first stage focuses on identifying variables that may elucidate why individuals view a certain profile. Potential variables include online presence, age, geographical location, and the timing of an individual's online activity. The second stage aims to identify factors that influence the likelihood of a profile receiving 'likes'. These may include the number of pictures on a profile, the characteristics of a profile's biography, languages spoken, profile verification status, and mobility.
 
 The project employed decision tree models to analyze the intricate patterns influencing user behaviour. Decision trees offer a clear and comprehensible framework to identify the complex characteristics that impact outcomes. Using these models, the analysis yielded insightful findings on unique aspects of user engagement on the dating platform. Two decision tree models were developed, each focusing on predicting different facets of user behaviour, namely profile views and 'likes'. This approach facilitated a deeper and more nuanced comprehension of the drivers behind these two critical indicators of user engagement.
 
-The results indicated a strong correlation between certain variables like online presence, age, mobility, and timing of online activity with the number of profile views. However, profile views were found to be the only predictor that significantly influences the 'likes' received by a profile. Thus, these decision tree models effectively shed light on the variables that play pivotal roles in digital dating platforms, and as such in mate searching behaviour.
+The results indicated a strong correlation between certain variables like online presence, age, mobility, and timing of online activity with the number of profile views. However, profile views were found to be the only predictor that significantly influences the 'likes' received by a profile. Thus, these decision tree models were not always truly effective in their results, but does shed light on some of the variables that play pivotal roles in digital dating platforms, and as such in mate searching behaviour.
 
 # Part 1: Transformation and Cleaning
 
@@ -216,7 +216,7 @@ set.seed(123)
 wordcloud2(words, size=1.6, color='random-light', backgroundColor = "#000123")
 ```
 
-Interestingly, one may see that popular words (those are words that get many profile views and are used frequently), are social media tags. That is, individuals that have their social media details, such as their Instagram handle, Facebook name, and Snapchat handle, on their account tend to get more profile views. As such, I will create another variable, called `has_social` that captures whether a profile contains social media particulars. Due to endogeneity and possible multicollinearity between `contains_popular_word` and `has_social`, only one can be used in modelling. Whichever delivers the most accurate result will then be used.
+Interestingly, one may see that popular words (those are words that get many profile views and are used frequently), are social media tags. That is, individuals that have their social media details, such as their Instagram handle, Facebook name, and Snapchat handle, on their account tend to get more profile likes. As such, I will create another variable, called `has_social` that captures whether a profile contains social media particulars. Due to endogeneity and possible multicollinearity between `contains_popular_word` and `has_social`, only one should be used in modelling. Whichever delivers the most accurate result will then be used.
 
 ```{r social, warning=FALSE}
 
@@ -255,7 +255,7 @@ df$Profile_Likes <- cut(df$counts_kisses,
 
 ```
 
-Finally, before kicking off with the exploratory data analysis, it might be fitting to standardise the following three variables: `counts_profileVisits`, `counts_kisses`, and `counts_pictures`. This operation may help to more clearly visualise how some variables influence each other.
+Finally, before kicking off with the exploratory data analysis, I standardised the following three variables: `counts_profileVisits`, `counts_kisses`, and `counts_pictures`. This operation may help to more clearly visualise how some variables influence each other.
 
 ```{r standardise}
 
@@ -444,7 +444,7 @@ scatplot
 
 ## Geographical characteristics and popularity
 
-Utilising the Google Maps API, I successfully geocoded the locations of all profiles present in the dataset. The primary objective behind this was to explore and visualise the potential impact of geographical location on profile views. The role of location might be significant, considering how geographical and cultural aspects can influence user interactions and preferences on the platform. The code snippet below shows the process to perform the geocoding operation.
+Utilising the Google Maps API, I successfully geocoded the locations of all profiles present in the dataset. The primary objective behind this was to explore and visualise the potential impact of geographical location on profile views. The role of location might be significant, considering how geographical and cultural aspects can influence user interactions and preferences on the platform.
 
 ```{r geocode}
 # Note: commented out, due to costs associated with geocoding through the API
@@ -463,9 +463,9 @@ Utilising the Google Maps API, I successfully geocoded the locations of all prof
 
 ```
 
-The subsequent bubble plot illustrates a few disparities among cities. However, these contrasts are not significant enough to confirm any clear geographical trends in profile views. Thus, it is not feasible to definitively say that some regions show more inclination towards profile views than others based on this representation.
+The subsequent bubble plot (left panel of Figure 6) illustrates a few disparities among cities. However, these contrasts are not significant enough to confirm any clear geographical trends in profile views. Thus, it is not feasible to definitively say that some regions show more inclination towards profile views than others based on this representation.
 
-To gain a more insightful understanding, a choropleth map is utilized. This geographical representation not only gives a visual interpretation of data but also enhances comprehension through color-coding. Upon implementing this, it becomes noticeably clear that certain countries indeed experience higher profile views on average.
+To gain a more insightful understanding, a choropleth map is utilized (right panel in Figure 6). This geographical representation not only gives a visual interpretation of data but also enhances comprehension through color-coding. Upon implementing this, it becomes noticeably clear that certain countries indeed experience higher profile views on average.
 
 In particular, profiles originating from Spain, Hungary, and the Netherlands tend to attract more attention compared to other European countries. The reasons behind these trends can be plenty - cultural nuances, user behaviors, or the presence of more active users in these regions. Future investigation might delve deeper into these aspects to provide more concrete explanations for the observed patterns.
 
@@ -608,7 +608,7 @@ ggplot(df_city_grouped, aes(x = reorder(name, -num_users), y = num_users)) +
 
 In this sub-section, the objective is to ascertain the impact of various profile attributes on the degree of popularity experienced on the dating application. The attributes under scrutiny regard an array of factors, including the number of pictures a profile has, its verification status, and whether it can be shared, among others.
 
-Having a verified profile is slightly more positively related to the number of likes received, then it is for those profiles that are not verified. The figure below shows a scatter plot of profile likes and views, coloured based on the verification status of the profile. Interestingly, if a profile is not shareable, this relationship inverts. However, this is possibly due to sample size bias, as there are much fewer profiles that are unshareable than those with share profile enabled.
+Having a verified profile is slightly more positively related to the number of likes received, then it is for those profiles that are not verified. Figure 8 below shows a scatter plot of profile likes and views, coloured based on the verification status of the profile. Interestingly, if a profile is not shareable, this relationship inverts. However, this is possibly due to sample size bias, as there are much fewer profiles that are unshareable than those with share profile enabled.
 
 #### Figure 8: Scatterplot of profile likes and views by verification and profile share status. In the left panel, only profiles with share profile enabled are shown, with the right panel only showing profiles with share profile disabled. A linear model was fitted to show the relationship more clearly.
 ```{r fig8}
@@ -763,7 +763,7 @@ After data preparation and exploration, I proceeded with modelling. As a part of
 
 In each of these chosen techniques, two separate models were trained to serve distinct predictive purposes. The first model targets the prediction of profile views, while the second model aims at forecasting profile likes. This dual-model approach was adopted in recognition of the distinct factors that could potentially influence these two different measures of user engagement. Each model is trained on a different set of predictor variables, carefully chosen based on the insights gathered during the data exploration phase.
 
-The first step involves partitioning it into training and testing subsets. I proceed to divide the dataset into training and testing subsets. For this analysis, I have adopted the widely used practice of a 70/30 split, whereby 70% of the data forms the training set and the remaining 30% is reserved for testing. This allocation ensures a balance - ample data to train the model effectively, whilst retaining a substantial portion for assessing the model's performance with unseen data. The code demonstrated below provides the method I employed to execute this data split. Moreover, I undertook this process twice. This resulted in two distinct sets - one set for profile views and another for profile likes, enabling a targeted examination of each aspect of profile engagement.
+The first step involves partitioning it into training and testing subsets. I proceed to divide the dataset into training and testing subsets. For this analysis, I have adopted the widely used practice of a 70/30 split, whereby 70% of the data forms the training set and the remaining 30% is reserved for testing. This allocation ensures a balance - ample data to train the model effectively, whilst retaining a substantial portion for assessing the model's performance with unseen data. Moreover, I undertook this process twice. This resulted in two distinct sets - one set for profile views and another for profile likes, enabling a targeted examination of each aspect of profile engagement.
 
 ```{r splitdata_views}
 df <- df[complete.cases(df[,c('isOnline', 'night_owl', 'age', 'genderLooking', 'verified', 'isMobile')]), ]
