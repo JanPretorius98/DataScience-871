@@ -1,26 +1,27 @@
 {
-    "id": "F266F223",
-    "path": "~/Downloads/Project_Example/Project_Example.Rmd",
+    "id": "902735A9",
+    "path": null,
     "project_path": null,
     "type": "r_markdown",
-    "hash": "0",
+    "hash": "2274175900",
     "contents": "",
     "dirty": false,
-    "created": 1687441943105.0,
+    "created": 1687442184483.0,
     "source_on_save": false,
     "relative_order": 5,
     "properties": {
+        "tempName": "Untitled1",
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "92,19",
-        "scrollLine": "83"
+        "cursorPosition": "1,0",
+        "scrollLine": "0"
     },
     "folds": "",
-    "lastKnownWriteTime": 1687394042,
-    "encoding": "UTF-8",
+    "lastKnownWriteTime": 0,
+    "encoding": "",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1687394042,
+    "last_content_update": 1687442184483,
     "read_only": false,
     "read_only_alternatives": []
 }
